@@ -31,18 +31,3 @@ main{padding:16px 12px;min-width:0}
 .live-score{gap:6px}.live-score strong{font-size:clamp(24px,6vw,48px)}
 }
 @media(max-width:550px){.logo b{font-size:22px}.logo small{display:none}.header-info{width:100%;justify-content:space-between;order:3}.mobile-menu-toggle{margin-left:auto}.stats{gap:8px}.stat,.panel{padding:13px}.hero{padding:15px}.hero .ball{display:none}.actions button{min-height:44px}}
-
-/* Chave eliminatória responsiva */
-.bracket-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding:12px 2px 20px;-webkit-overflow-scrolling:touch}
-.bracket-grid{display:flex;gap:22px;align-items:stretch;width:max-content;min-width:100%}
-.bracket-round{width:210px;display:flex;flex-direction:column;flex:none}
-.bracket-round h4{margin:0 0 14px;text-align:center;font-size:13px;letter-spacing:.04em}
-.bracket-matches{display:flex;flex-direction:column;justify-content:space-around;gap:12px;flex:1}
-.bracket-match{border:1px solid #475569;border-radius:9px;background:rgba(100,116,139,.10);overflow:hidden;min-height:72px;display:flex;flex-direction:column;justify-content:center}
-.bracket-team{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;font-size:12px;min-height:35px}
-.bracket-team+.bracket-team{border-top:1px solid rgba(148,163,184,.25)}
-.bracket-team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bracket-team b{flex:none;font-size:13px}
-.bracket-winner{color:#22c55e;font-weight:800}
-.bracket-champion{justify-content:center}
-@media(max-width:700px){.bracket-round{width:178px}.bracket-grid{gap:12px}}
