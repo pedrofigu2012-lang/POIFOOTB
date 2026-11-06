@@ -1,8 +1,7 @@
-POIFOOTB - Artilharia e Assistências
+POIFOOTB — Inglaterra
 
-Novidade: rankings por competição de gols e assistências, gerados durante simulações novas.
-Abra a aba Artilharia e Assistências para alternar entre 10 ligas, 10 copas nacionais, Libertadores, Sul-Americana e Super Mundial.
-Os rankings também aparecem nas páginas de cada campeonato.
-Jogadores provisórios sem nome identificado não recebem gols individuais; portanto a soma dos gols individuais pode ser menor que os gols das partidas.
-Dados fictícios; partidas simuladas antes desta atualização não têm estatísticas individuais retroativas.
-Para atualizar no GitHub Pages, envie index.html, style.css e script.js à raiz do repositório.
+20 clubes ingleses e 18 jogadores identificados por clube (360 jogadores).
+Os nomes são referências ilustrativas de elencos recentes, NÃO elencos oficiais verificados de novembro de 2026. Overalls e valores são estimativas do jogo.
+A Inglaterra é jogável e seus atletas aparecem no mercado internacional.
+Inclui copa nacional inglesa simulada. Libertadores e Sul-Americana continuam restritas a clubes da CONMEBOL.
+Envie index.html, style.css e script.js para a raiz do repositório GitHub Pages.
