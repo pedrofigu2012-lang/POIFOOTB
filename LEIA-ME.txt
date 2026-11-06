@@ -1,7 +1,12 @@
-POIFOOTB — Champions League e Espanha
+POIFOOTB - MULTIPLAYER LOCAL SINCRONIZADO
 
-20 clubes espanhóis com 18 nomes de jogadores cada (360 registros). Referências de elencos de temporadas anteriores, NÃO verificadas como atuais em novembro de 2026. Inclui clubes que podem não estar na primeira divisão de 2026.
+Arquivos: index.html, style.css e script.js. Envie os três à raiz do repositório GitHub Pages.
 
-Champions League fictícia com 16 clubes (8 ingleses e 8 espanhóis), mata-mata de jogo único. É obrigatória para encerrar temporada se o treinador estiver na Inglaterra ou Espanha. Para clubes sul-americanos, a Champions não bloqueia a temporada.
+Nova sala: 2 a 8 treinadores, cada um escolhe clube diferente. Todos compartilham a mesma temporada, classificações, elencos e torneios. Os jogadores passam a vez pelo botão 'Encerrar minha vez'. Não há troca livre de treinador fora do fluxo obrigatório.
 
-Mantenha index.html, style.css e script.js na raiz do repositório GitHub Pages.
+LIMITAÇÕES IMPORTANTES:
+- A simulação de rodada processa todos os jogos de uma liga de uma só vez. Quando dois treinadores estão na mesma liga, o segundo não joga novamente a mesma rodada: ela já foi simulada pelo primeiro. Ainda não há confronto humano vs. humano ao vivo.
+- As copas continentais são simuladas em um único mundo compartilhado, mas não possuem controle de turnos por partida.
+- A passagem para uma nova temporada ainda usa o mecanismo original da carreira ativa; não há calendário global completo por data.
+- Salas antigas com carreiras independentes não são convertidas automaticamente. Crie uma nova sala sincronizada.
+- O salvamento é local no mesmo navegador/computador. Não há servidor nem sincronização pela internet.
