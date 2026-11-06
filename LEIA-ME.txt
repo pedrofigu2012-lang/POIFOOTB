@@ -1,7 +1,5 @@
-POIFOOTB — Inglaterra
+POIFOOTB — Atualização Europa
 
-20 clubes ingleses e 18 jogadores identificados por clube (360 jogadores).
-Os nomes são referências ilustrativas de elencos recentes, NÃO elencos oficiais verificados de novembro de 2026. Overalls e valores são estimativas do jogo.
-A Inglaterra é jogável e seus atletas aparecem no mercado internacional.
-Inclui copa nacional inglesa simulada. Libertadores e Sul-Americana continuam restritas a clubes da CONMEBOL.
-Envie index.html, style.css e script.js para a raiz do repositório GitHub Pages.
+Clubes da Inglaterra (liga 11) não precisam simular Libertadores ou Sul-Americana para avançar a temporada. Continuam obrigatórios o campeonato inglês, a copa nacional inglesa e o Super Mundial quando programado. Clubes sul-americanos mantêm as regras anteriores.
+
+Substitua index.html, style.css e script.js na raiz do repositório GitHub.
