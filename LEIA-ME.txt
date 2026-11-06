@@ -1,1 +1,13 @@
-POIFOOTB — 18 vagas de elenco para cada um dos 112 clubes das 10 ligas. Nomes de atletas conhecidos são apenas referências e não foram validados como elencos de novembro de 2026. Vagas restantes aparecem como Atleta a confirmar. Para publicar: envie index.html, style.css e script.js à raiz do repositório GitHub. Faça backup da versão anterior.
+POIFOOTB — Modo Carreira Internacional
+
+Novidades:
+- Escolha clubes de todas as 10 ligas sul-americanas no início da carreira.
+- Mercado com jogadores identificados de clubes estrangeiros e brasileiros.
+- Compras e vendas mudam os elencos e o orçamento.
+- Campeonatos e temporadas funcionam com clubes estrangeiros.
+- Libertadores simulada e salvamento automático no navegador.
+
+ATENÇÃO: Os elencos não são oficiais de novembro de 2026. Jogadores identificados são referências não verificadas e as vagas 'Atleta a confirmar' são fictícias/provisórias.
+
+INSTALAÇÃO: envie index.html, style.css e script.js para a raiz do repositório GitHub Pages.
+SALVAMENTO: a versão usa o mesmo armazenamento do jogo anterior; use Nova carreira para selecionar um clube estrangeiro.
