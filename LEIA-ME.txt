@@ -1,10 +1,8 @@
-POIFOOTB — Itália e Satisfação (versão 14)
+POIFOOTB - Bundesliga e Ligue 1
 
-- 20 clubes italianos jogáveis, 18 nomes de jogadores por clube (360 referências de elencos 2024/25; não são listas oficiais de 2026).
-- Salários, mercado, copa nacional italiana, liga italiana e Champions League integrados às regras já existentes.
-- Barras de satisfação da diretoria e torcida de 0 a 100. Vitória melhora; empate ou derrota reduzem; posição e caixa influenciam.
-- Abaixo de 20 em qualquer barra: demissão imediata, com propostas para seguir a carreira.
-- Trocar de clube reinicia a confiança, e multiplayer mantém a satisfação individual de cada treinador.
-- Copie index.html, style.css e script.js para a raiz do GitHub Pages.
-- Faça backup do salvamento do navegador antes de atualizar.
-- A simulação não foi testada ponta a ponta em navegador.
+Adiciona 18 clubes alemães e 18 franceses (36 clubes) com 18 vagas por elenco (648 vagas).
+Os 11 clubes principais incluídos têm referências nominais de 18 atletas cada; os outros mantêm vagas 'Atleta a confirmar' para evitar inventar nomes.
+Os vínculos dos atletas são referências históricas/recentes, NÃO elencos oficiais de novembro de 2026.
+A Champions League simulada passa a incluir clubes das cinco ligas europeias e continua obrigatória para carreiras europeias.
+
+Instalação: envie index.html, style.css e script.js para a raiz do repositório GitHub Pages.
