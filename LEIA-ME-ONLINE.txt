@@ -1,0 +1,47 @@
+POIFOOTB - MULTIPLAYER ONLINE (VERSAO EXPERIMENTAL)
+
+IMPORTANTE: GitHub Pages hospeda os arquivos, mas NAO e um servidor de multiplayer.
+Para sincronizar celulares/computadores, configure Firebase Authentication e Realtime Database.
+
+PASSO 1 - FIREBASE
+1. Acesse https://console.firebase.google.com e crie um projeto.
+2. Em Authentication > Sign-in method, habilite Anonymous (Anonimo).
+3. Em Realtime Database, crie um banco (anote a databaseURL exata).
+4. Em Configuracoes do projeto > Seus apps, registre um aplicativo Web e copie os dados de configuracao.
+5. Abra firebase-config.js e substitua todos os valores COLE_ pelos dados reais.
+
+PASSO 2 - REGRAS DO REALTIME DATABASE (PROTOTIPO)
+Na aba Rules, cole:
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
+
+ATENCAO: estas regras sao apenas para partidas entre amigos e testes. Usuarios autenticados anonimamente que conhecam o ID podem ler e alterar os dados da sala; o Firebase nao valida o dono da vez. Nao use para jogos publicos/competitivos nem dados pessoais. Para um servico publico, implemente regras de autorizacao por jogador e validacao das jogadas no servidor.
+
+PASSO 3 - GITHUB
+Envie para a RAIZ do repositorio os cinco arquivos:
+index.html, style.css, script.js, online.js, firebase-config.js
+O arquivo LEIA-ME-ONLINE.txt e opcional.
+
+PASSO 4 - JOGAR
+1. Abra o site no navegador e clique em Criar sala online.
+2. Escolha 2 a 8 treinadores e digite seu nome.
+3. Copie o link da sala e compartilhe com amigos.
+4. Cada amigo abre o link, entra com um nome e ocupa uma vaga livre.
+5. O jogo sincroniza as alteracoes entre navegadores pela internet.
+6. Cada um joga quando chegar a sua vez; os outros aguardam.
+
+LIMITACOES:
+- Prototipo por turnos: nao ha partida ao vivo simultanea entre dois humanos.
+- O jogo precisa de internet e Firebase funcionando.
+- Salas nao possuem limpeza automatica; apague salas antigas pelo console Firebase.
+- O sistema salva o mundo inteiro a cada alteracao. Em conexoes lentas, espere a sincronizacao antes de trocar de pagina ou fechar o navegador.
+- Uma sala nao substitui seu save solo; ela usa outro mundo.
+- O codigo passou por checagem de sintaxe, mas nao foi testado com um projeto Firebase real.

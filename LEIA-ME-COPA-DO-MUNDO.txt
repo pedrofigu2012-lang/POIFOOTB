@@ -1,0 +1,10 @@
+POIFOOTB — Copa do Mundo de Seleções
+
+Adicionada aba Copa do Mundo com 32 seleções e 18 jogadores por seleção (576 atletas de referência).
+Simule três rodadas de grupos, oitavas, quartas, semifinais e final.
+A competição é opcional e separada do Super Mundial de Clubes.
+As convocações e participantes são ilustrativos, não oficiais de 2026. As notas são fictícias.
+A Copa do Mundo desta versão pode ser disputada em cada temporada do jogo, sem calendário quadrienal.
+
+Para instalar, envie index.html, style.css, script.js, online.js e firebase-config.js à raiz do repositório.
+Se já usa Firebase, preserve suas configurações existentes em firebase-config.js.
