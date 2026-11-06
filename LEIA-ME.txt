@@ -1,8 +1,1 @@
-POIFOOTB — salários reduzidos em 25%
-
-Substitua index.html, style.css e script.js na raiz do seu repositório GitHub Pages.
-
-Os salários atuais são multiplicados por 0,75 uma única vez (versão salarial 11).
-Novos jogadores recebem 75% do salário da versão anterior.
-Pagamentos anteriores não são alterados; próximos pagamentos usam os valores reduzidos.
-Todos os demais recursos da versão anterior foram mantidos.
+POIFOOTB: demissões e troca de clubes. Abra a aba Empregos e demissões para procurar propostas. A diretoria avalia sua posição e finanças ao final da temporada. Os resultados de outros clubes não são reiniciados ao mudar de equipe. Substitua index.html, style.css e script.js no GitHub.
