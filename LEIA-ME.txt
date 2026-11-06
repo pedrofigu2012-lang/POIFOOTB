@@ -1,12 +1,10 @@
-POIFOOTB - MULTIPLAYER LOCAL SINCRONIZADO
+POIFOOTB — Itália e Satisfação (versão 14)
 
-Arquivos: index.html, style.css e script.js. Envie os três à raiz do repositório GitHub Pages.
-
-Nova sala: 2 a 8 treinadores, cada um escolhe clube diferente. Todos compartilham a mesma temporada, classificações, elencos e torneios. Os jogadores passam a vez pelo botão 'Encerrar minha vez'. Não há troca livre de treinador fora do fluxo obrigatório.
-
-LIMITAÇÕES IMPORTANTES:
-- A simulação de rodada processa todos os jogos de uma liga de uma só vez. Quando dois treinadores estão na mesma liga, o segundo não joga novamente a mesma rodada: ela já foi simulada pelo primeiro. Ainda não há confronto humano vs. humano ao vivo.
-- As copas continentais são simuladas em um único mundo compartilhado, mas não possuem controle de turnos por partida.
-- A passagem para uma nova temporada ainda usa o mecanismo original da carreira ativa; não há calendário global completo por data.
-- Salas antigas com carreiras independentes não são convertidas automaticamente. Crie uma nova sala sincronizada.
-- O salvamento é local no mesmo navegador/computador. Não há servidor nem sincronização pela internet.
+- 20 clubes italianos jogáveis, 18 nomes de jogadores por clube (360 referências de elencos 2024/25; não são listas oficiais de 2026).
+- Salários, mercado, copa nacional italiana, liga italiana e Champions League integrados às regras já existentes.
+- Barras de satisfação da diretoria e torcida de 0 a 100. Vitória melhora; empate ou derrota reduzem; posição e caixa influenciam.
+- Abaixo de 20 em qualquer barra: demissão imediata, com propostas para seguir a carreira.
+- Trocar de clube reinicia a confiança, e multiplayer mantém a satisfação individual de cada treinador.
+- Copie index.html, style.css e script.js para a raiz do GitHub Pages.
+- Faça backup do salvamento do navegador antes de atualizar.
+- A simulação não foi testada ponta a ponta em navegador.
