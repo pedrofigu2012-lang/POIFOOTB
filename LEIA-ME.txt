@@ -1,5 +1,7 @@
-POIFOOTB — Atualização Europa
+POIFOOTB - MULTIPLAYER LOCAL (HOT SEAT)
 
-Clubes da Inglaterra (liga 11) não precisam simular Libertadores ou Sul-Americana para avançar a temporada. Continuam obrigatórios o campeonato inglês, a copa nacional inglesa e o Super Mundial quando programado. Clubes sul-americanos mantêm as regras anteriores.
+Modo de 2 a 8 treinadores no mesmo computador. Clique em Criar sala, escolha os nomes e cada pessoa seleciona seu clube. Troque de treinador usando os botões no topo.
 
-Substitua index.html, style.css e script.js na raiz do repositório GitHub.
+IMPORTANTE: cada treinador joga sua propria carreira salva separadamente no mesmo navegador. Nao ha partidas diretas entre humanos nem uma tabela compartilhada nesta versao. O modo solo anterior e preservado.
+
+Substitua index.html, style.css e script.js no repositorio GitHub Pages.
