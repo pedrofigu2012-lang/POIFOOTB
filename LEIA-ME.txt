@@ -1,0 +1,20 @@
+POIFOOTB - MODO CARREIRA
+
+COMO PUBLICAR:
+1. Extraia o ZIP.
+2. No repositório GitHub POIFOOTB, envie index.html, style.css e script.js para a raiz.
+3. Substitua os arquivos anteriores e confirme o commit.
+4. Em Settings > Pages, configure Deploy from a branch, main, /(root).
+5. Aguarde a publicação e abra o endereço GitHub Pages. Use Ctrl+F5 para atualizar.
+
+RECURSOS:
+- Escolha entre 20 clubes de uma base demonstrativa.
+- Simule 19 rodadas por temporada e avance para o próximo ano.
+- Compre e venda jogadores, gerencie orçamento, classificação e histórico.
+- Salvamento automático via localStorage no mesmo navegador.
+
+IMPORTANTE:
+- Elencos são demonstrativos, com nomes de jogadores reais, e NÃO são um cadastro oficial ou atualizado de novembro de 2026. Alguns nomes podem estar em outros clubes atualmente.
+- Overalls, valores e resultados são fictícios, calculados para o jogo.
+- O formato é simplificado (turno único de 19 rodadas), não reproduz a tabela real de 38 rodadas.
+- O jogo é um projeto independente de fãs, sem vínculo com o Brasfoot ou a CBF.
