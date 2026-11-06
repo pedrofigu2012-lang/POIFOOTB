@@ -1,8 +1,1 @@
-POIFOOTB - Ligas Sul-Americanas e Libertadores
-
-Envie index.html, style.css e script.js para a RAIZ do repositorio GitHub.
-A aba Ligas Sul-Americanas permite acompanhar e simular 10 campeonatos nacionais.
-A aba Libertadores permite disputar uma simulacao com 32 clubes, fase de grupos e mata-mata.
-Os times sao representativos, nao sao participantes oficiais de 2026. Os jogadores estrangeiros sao ficticios e os brasileiros usam a base ilustrativa da versao anterior.
-O calendario, a classificacao e as regras sao simplificados.
-O progresso e salvo no navegador.
+POIFOOTB — 18 vagas de elenco para cada um dos 112 clubes das 10 ligas. Nomes de atletas conhecidos são apenas referências e não foram validados como elencos de novembro de 2026. Vagas restantes aparecem como Atleta a confirmar. Para publicar: envie index.html, style.css e script.js à raiz do repositório GitHub. Faça backup da versão anterior.
