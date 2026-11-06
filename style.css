@@ -1,0 +1,82 @@
+
+/* POIFOOTB GOLD - NOVO MENU */
+
+.sidebar {
+  background: linear-gradient(180deg, #101b18, #080e0c);
+  border-right: 2px solid #c9a84c;
+  padding: 24px 15px;
+}
+
+.club-card {
+  background: linear-gradient(135deg, #233b30, #101c17);
+  border: 1px solid #c9a84c;
+  border-radius: 18px;
+  padding: 25px 15px;
+  box-shadow: 0 8px 25px #0006;
+}
+
+.club-crest {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  border: 3px solid #e0bb62;
+  background: #101a15;
+  box-shadow: 0 0 22px #d5b45655;
+}
+
+.club-card h2 {
+  color: #ffffff;
+  font-size: 27px;
+  letter-spacing: 1px;
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 10px;
+}
+
+.nav {
+  min-height: 52px;
+  background: #182820;
+  color: #d6e5db;
+  border: 1px solid #2c4939;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.nav:hover {
+  background: #304e3b;
+  color: #ffdc7a;
+  border-color: #c9a84c;
+  transform: translateX(4px);
+}
+
+.nav.active {
+  background: linear-gradient(100deg, #315c3b, #1c3528);
+  color: #ffdc7a;
+  border: 1px solid #d5b456;
+  box-shadow: inset 4px 0 #e0bb62, 0 5px 15px #0005;
+}
+
+.sidebar-bottom {
+  color: #c9a84c;
+  border-top: 1px solid #405345;
+  padding-top: 18px;
+}
+
+@media (max-width: 850px) {
+  .sidebar {
+    border-right: none;
+    border-bottom: 2px solid #c9a84c;
+  }
+  .sidebar nav {
+    display: flex;
+    overflow-x: auto;
+  }
+  .nav {
+    white-space: nowrap;
+  }
+}
