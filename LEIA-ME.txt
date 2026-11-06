@@ -1,1 +1,7 @@
-POIFOOTB: demissões e troca de clubes. Abra a aba Empregos e demissões para procurar propostas. A diretoria avalia sua posição e finanças ao final da temporada. Os resultados de outros clubes não são reiniciados ao mudar de equipe. Substitua index.html, style.css e script.js no GitHub.
+POIFOOTB — Champions League e Espanha
+
+20 clubes espanhóis com 18 nomes de jogadores cada (360 registros). Referências de elencos de temporadas anteriores, NÃO verificadas como atuais em novembro de 2026. Inclui clubes que podem não estar na primeira divisão de 2026.
+
+Champions League fictícia com 16 clubes (8 ingleses e 8 espanhóis), mata-mata de jogo único. É obrigatória para encerrar temporada se o treinador estiver na Inglaterra ou Espanha. Para clubes sul-americanos, a Champions não bloqueia a temporada.
+
+Mantenha index.html, style.css e script.js na raiz do repositório GitHub Pages.
