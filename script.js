@@ -807,10 +807,54 @@ function manualTick(ts){
   if(Math.floor(g.clock)%13===0&&Math.floor(g.clock)!==g.lastGoal&&g.ball.owner===null&&g.ball.x<370){g.lastGoal=Math.floor(g.clock);if(Math.random()<.26){m.away++;g.notice='⚽ Gol do adversário!';manualReset(true);}}
   if(m.minute>=90){manualStop();finishLive();return;}
  }
- ctx.fillStyle='#16653c';ctx.fillRect(0,0,800,500);for(let i=0;i<10;i++){ctx.fillStyle=i%2?'#1b7042':'#196a3e';ctx.fillRect(i*80,0,80,500)}
- ctx.strokeStyle='#e3f4e6';ctx.lineWidth=2;ctx.strokeRect(10,10,780,480);ctx.beginPath();ctx.moveTo(400,10);ctx.lineTo(400,490);ctx.stroke();ctx.beginPath();ctx.arc(400,250,65,0,Math.PI*2);ctx.stroke();ctx.strokeRect(10,145,125,210);ctx.strokeRect(665,145,125,210);ctx.fillStyle='#e7e7e7';ctx.fillRect(790,190,9,120);ctx.fillRect(1,190,9,120);
- g.players.forEach((p,i)=>{ctx.beginPath();ctx.fillStyle=i===g.active?'#ffda50':'#3e8dff';ctx.arc(p.x,p.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=i===g.active?3:1;ctx.stroke();ctx.fillStyle='#fff';ctx.font='11px Arial';ctx.textAlign='center';ctx.fillText(i+1,p.x,p.y+4)});
- g.foes.forEach(p=>{ctx.beginPath();ctx.fillStyle='#e84554';ctx.arc(p.x,p.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.stroke()});ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(g.ball.x,g.ball.y,6,0,Math.PI*2);ctx.fill();
+ // Visual inspirado em futebol arcade visto de cima: câmera, bonecos, sombras, redes e HUD.
+ const W=800,H=500,ball=g.ball;
+ ctx.clearRect(0,0,W,H);
+ const zoom=1.27,viewW=W/zoom,viewH=H/zoom;
+ const cx=Math.max(viewW/2,Math.min(W-viewW/2,ball.x));
+ const cy=Math.max(viewH/2,Math.min(H-viewH/2,ball.y));
+ ctx.save();ctx.scale(zoom,zoom);ctx.translate(-(cx-viewW/2),-(cy-viewH/2));
+ ctx.fillStyle='#419a52';ctx.fillRect(0,0,W,H);
+ for(let i=0;i<16;i++){ctx.fillStyle=i%2?'#4da65a':'#429c52';ctx.fillRect(i*50,0,50,H)}
+ ctx.strokeStyle='rgba(19,65,28,.16)';ctx.lineWidth=6;ctx.strokeRect(8,8,784,484);
+ ctx.strokeStyle='#f5f9ef';ctx.lineWidth=3.3;ctx.strokeRect(14,14,772,472);
+ ctx.beginPath();ctx.moveTo(400,14);ctx.lineTo(400,486);ctx.stroke();ctx.beginPath();ctx.arc(400,250,67,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.arc(400,250,3,0,Math.PI*2);ctx.fillStyle='#f7fff7';ctx.fill();
+ ctx.strokeRect(14,140,120,220);ctx.strokeRect(666,140,120,220);
+ ctx.strokeRect(14,190,48,120);ctx.strokeRect(738,190,48,120);
+ for(const gx of [14,786]){ctx.beginPath();ctx.arc(gx,250,3,0,Math.PI*2);ctx.fill();}
+ ctx.beginPath();ctx.arc(134,250,60,-Math.PI*.34,Math.PI*.34);ctx.stroke();
+ ctx.beginPath();ctx.arc(666,250,60,Math.PI*.66,Math.PI*1.34);ctx.stroke();
+ function goal(x){ctx.save();ctx.fillStyle='rgba(12,43,23,.30)';ctx.fillRect(x+(x<400?-23:0),195,23,110);ctx.strokeStyle='#effff5';ctx.lineWidth=3;ctx.strokeRect(x+(x<400?-23:0),195,23,110);ctx.strokeStyle='rgba(235,255,240,.65)';ctx.lineWidth=.9;for(let y=201;y<305;y+=9){ctx.beginPath();ctx.moveTo(x+(x<400?-23:0),y);ctx.lineTo(x+(x<400?0:23),y);ctx.stroke()}for(let j=0;j<4;j++){let xx=x+(x<400?-23:0)+j*7.5;ctx.beginPath();ctx.moveTo(xx,195);ctx.lineTo(xx,305);ctx.stroke()}ctx.restore()}
+ goal(14);goal(786);
+ function athlete(p,jersey,shorts,number,selected,goalie=false){
+  const x=p.x,y=p.y;ctx.save();ctx.translate(x,y);
+  ctx.fillStyle='rgba(14,52,24,.36)';ctx.beginPath();ctx.ellipse(8,11,14,9,-.25,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#272d38';ctx.beginPath();ctx.ellipse(-5,10,4.2,6,.25,0,Math.PI*2);ctx.ellipse(6,10,4.2,6,-.25,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=shorts;ctx.fillRect(-9,1,18,9);
+  ctx.fillStyle=jersey;ctx.beginPath();ctx.ellipse(0,-2,11.8,10.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d9a079';ctx.beginPath();ctx.arc(0,-12,7.7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#49352c';ctx.beginPath();ctx.arc(0,-15,6.7,Math.PI,Math.PI*2);ctx.fill();
+  ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(number,0,2);
+  if(selected){ctx.strokeStyle='#f8ef56';ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,2,17,17,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#fff';ctx.font='italic bold 16px system-ui';ctx.fillText(''+number,0,-30)}
+  ctx.restore();
+ }
+ // Goleiros destacados nas duas áreas.
+ athlete({x:43,y:250},'#e6bb31','#e6bb31','1',false,true);
+ athlete({x:757,y:250},'#f5ca4d','#e4aa24','1',false,true);
+ g.foes.forEach((p,i)=>athlete(p,'#e5474c','#f3f3f3',i+2,false));
+ g.players.forEach((p,i)=>athlete(p,'#293a92','#f1f4f8',i+6,i===g.active));
+ if(ball.owner===g.active){const p=g.players[g.active];ctx.save();ctx.setLineDash([8,7]);ctx.strokeStyle='rgba(255,255,255,.65)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(p.x+9,p.y+9);ctx.lineTo(Math.min(785,p.x+150),250);ctx.stroke();ctx.restore()}
+ ctx.fillStyle='rgba(9,45,19,.38)';ctx.beginPath();ctx.ellipse(ball.x+5,ball.y+8,9,5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#fff';ctx.strokeStyle='#222';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(ball.x,ball.y,8,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#151515';for(let j=0;j<5;j++){let ang=j*Math.PI*2/5;ctx.beginPath();ctx.arc(ball.x+Math.cos(ang)*4,ball.y+Math.sin(ang)*4,2.3,0,Math.PI*2);ctx.fill()}
+ ctx.restore();
+ // Placar e nome do atleta, fixos na tela, como na referência enviada.
+ const team=careerName().slice(0,3).toUpperCase(),opp=(m.cup?m.oppName:countryLeagues[m.li].clubs[m.opp]).slice(0,3).toUpperCase();
+ ctx.fillStyle='rgba(18,29,31,.88)';ctx.beginPath();ctx.moveTo(16,12);ctx.lineTo(360,12);ctx.lineTo(348,62);ctx.lineTo(16,62);ctx.closePath();ctx.fill();
+ ctx.font='italic 900 26px system-ui';ctx.textAlign='left';ctx.fillStyle='#fff';ctx.fillText(`${team} ${m.own} - ${m.away} ${opp}`,29,45);
+ ctx.font='italic bold 17px system-ui';ctx.fillText(`${String(m.minute).padStart(2,'0')}:00`,266,45);
+ ctx.fillStyle='#4d77ed';ctx.fillRect(28,54,78,4);ctx.fillStyle='#e44d61';ctx.fillRect(171,54,78,4);
+ const stamina=Math.max(0,100-Math.floor(g.clock/1.6));ctx.font='italic 900 18px system-ui';ctx.textAlign='right';ctx.fillStyle='#fff';ctx.fillText(`JOGADOR ${g.active+6}`,782,32);ctx.fillStyle='#292e36';ctx.fillRect(670,41,112,6);ctx.fillStyle=stamina>30?'#e843a5':'#ff9a37';ctx.fillRect(670,41,112*stamina/100,6);
  const score=document.getElementById('manualScore');if(score)score.textContent=`${careerName()} ${m.own} × ${m.away} ${m.cup?m.oppName:countryLeagues[m.li].clubs[m.opp]} • ${m.minute}'`;
  const notice=document.getElementById('manualNotice');if(notice)notice.textContent=g.notice;
  manualFrame=requestAnimationFrame(manualTick);
