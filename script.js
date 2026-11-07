@@ -766,12 +766,12 @@ function manualStart(){
  let rival=[];if(!m.cup&&state.players){rival=li===0?state.players[m.opp]:state.foreignPlayers?.[li]?.[m.opp]}
  const opp=manualStrength(rival);const share=manualClamp(.5+(own-opp)/85,.24,.76);
  m.manual=true;m.minute=0;m.own=0;m.away=0;m.shown=0;
- manualGame={clock:0,phase:'between',phaseClock:0,attackShare:share,turn:0,turns:0,attack:null,owner:0,ball:{x:0,y:0},players:[],foes:[],drag:null,aim:null,notice:'Aguarde o próximo ataque. A força dos times influencia as chances.',shots:0};
+ manualGame={clock:0,phase:'between',phaseClock:0,attackShare:share,turn:0,turns:0,attack:null,owner:0,ball:{x:0,y:0},players:[],foes:[],drag:null,aim:null,notice:'Aguarde o próximo ataque. A força dos times influencia as chances.',shots:0,animation:null,streak:0};
  state.page='live';render();manualMount();
 }
 function manualSetupAttack(ours){
  const g=manualGame;if(!g)return;
- g.phase=ours?'attack':'defense';g.phaseClock=0;g.aim=null;g.drag=null;g.turns++;
+ g.phase=ours?'attack':'defense';g.phaseClock=0;g.aim=null;g.drag=null;g.animation=null;g.turns++;
  g.players=[{x:190,y:245},{x:320,y:135},{x:350,y:340},{x:470,y:210},{x:500,y:385}];
  g.foes=[{x:285,y:220},{x:430,y:300},{x:555,y:160},{x:610,y:350},{x:690,y:250}];
  if(ours){g.owner=0;g.ball={x:190,y:245};g.notice='⏸ Tempo congelado! Toque em um companheiro para PASSAR, no gramado para CORRER ou arraste do jogador para CHUTAR.'}
@@ -780,7 +780,7 @@ function manualSetupAttack(ours){
 function manualMount(){
  const c=document.getElementById('manualPitch');if(!c||!manualGame)return;c.width=800;c.height=500;
  const xy=e=>{const r=c.getBoundingClientRect(),sx=(e.clientX-r.left)*800/r.width,sy=(e.clientY-r.top)*500/r.height;return manualUnproject(sx,sy)};
- c.onpointerdown=e=>{e.preventDefault();const g=manualGame;if(!g||liveMatch?.paused||!['attack','defense'].includes(g.phase))return;const p=xy(e);g.drag={start:p,end:p};try{c.setPointerCapture(e.pointerId)}catch(_){}};
+ c.onpointerdown=e=>{e.preventDefault();const g=manualGame;if(!g||g.animation||liveMatch?.paused||!['attack','defense'].includes(g.phase))return;const p=xy(e);g.drag={start:p,end:p};try{c.setPointerCapture(e.pointerId)}catch(_){}};
  c.onpointermove=e=>{if(!manualGame?.drag)return;manualGame.drag.end=xy(e)};
  c.onpointerup=e=>{const g=manualGame;if(!g?.drag)return;g.drag.end=xy(e);const {start,end}=g.drag;g.drag=null;manualGesture(start,end)};
  c.onpointercancel=()=>{if(manualGame)manualGame.drag=null};
@@ -789,24 +789,38 @@ function manualMount(){
  cancelAnimationFrame(manualFrame);manualLast=0;manualFrame=requestAnimationFrame(manualTick);
 }
 function manualGesture(start,end){
- const g=manualGame;if(!g||!['attack','defense'].includes(g.phase))return;
+ const g=manualGame;if(!g||g.animation||!['attack','defense'].includes(g.phase))return;
  const dist=Math.hypot(end.x-start.x,end.y-start.y);
  if(g.phase==='defense'){
-  if(dist<18){g.notice='Desenhe um traço para dar o carrinho.';return}
-  const vx=(end.x-start.x)/dist,vy=(end.y-start.y)/dist;
-  const toward=Math.max(0,vx*(-1));const quality=manualClamp(.28+toward*.48+(dist>90?.12:0),.12,.9);
-  if(Math.random()<quality){g.notice='🛡️ Carrinho certeiro! Ataque adversário interrompido.';manualFinishAttack(false,false)}
-  else{const goal=Math.random()<.37;g.notice=goal?'⚽ O adversário marcou após escapar do carrinho!':'O carrinho errou, mas o adversário finalizou para fora.';manualFinishAttack(false,goal)}
+  if(dist<18){g.notice='Desenhe um traço na direção do atacante para dar o carrinho.';return}
+  const defender=g.players.reduce((best,p,i)=>Math.hypot(p.x-start.x,p.y-start.y)<Math.hypot(g.players[best].x-start.x,g.players[best].y-start.y)?i:best,0);
+  const player=g.players[defender],foe=g.foes.reduce((best,p,i)=>Math.hypot(p.x-g.ball.x,p.y-g.ball.y)<Math.hypot(g.foes[best].x-g.ball.x,g.foes[best].y-g.ball.y)?i:best,0);
+  const target=g.foes[foe],ex=manualClamp(player.x+(end.x-start.x),10,790),ey=manualClamp(player.y+(end.y-start.y),10,490);
+  const gap=Math.hypot(ex-target.x,ey-target.y);
+  const success=Math.random()<manualClamp(.88-gap/230,.08,.9);
+  const goal=!success&&Math.random()<manualClamp(.22+(g.attackShare<.5?.13:0),.14,.48);
+  g.notice=success?'🛡️ Carrinho perfeito! Você recuperou a bola.':goal?'⚽ O adversário escapou e marcou!':'O atacante escapou, mas chutou para fora.';
+  g.animation={kind:'tackle',elapsed:0,duration:.48,from:{...player},to:{x:ex,y:ey},index:defender,finish:()=>manualFinishAttack(false,goal)};
   return;
  }
  const p=g.players[g.owner];if(!p)return;
  // Um toque sobre outro atleta é passe. Um toque no campo é corrida.
  if(dist<24){const target=g.players.findIndex((q,i)=>i!==g.owner&&Math.hypot(q.x-end.x,q.y-end.y)<28);
-  if(target>=0){const intercepted=Math.random()<manualClamp(.07+Math.hypot(p.x-g.players[target].x)/1400,.07,.35);if(intercepted){g.notice='Passe interceptado!';manualFinishAttack(true,false);return}g.owner=target;g.ball={...g.players[target]};g.notice='⏸ Passe completo! Escolha a próxima jogada.';return}
+  if(target>=0){
+   const dest=g.players[target],distance=Math.hypot(p.x-dest.x,p.y-dest.y);
+   const nearest=Math.min(...g.foes.map(f=>Math.hypot(f.x-dest.x,f.y-dest.y)));
+   const intercepted=Math.random()<manualClamp(.05+distance/1700+(nearest<55?.21:0),.05,.48);
+   g.notice=intercepted?'⚠️ Passe interceptado!':'⚽ Passe realizado! Escolha a próxima jogada.';
+   g.animation={kind:'pass',elapsed:0,duration:manualClamp(distance/520,.22,.8),from:{...p},to:{...dest},finish:()=>{if(intercepted)manualFinishAttack(true,false);else{g.owner=target;g.ball={...dest};g.streak++}}};
+   return;
+  }
   const runDist=Math.hypot(end.x-p.x,end.y-p.y);if(runDist<20){g.notice='Toque mais longe para correr ou em um colega para passar.';return}
   const step=manualClamp(runDist,0,135),vx=(end.x-p.x)/runDist,vy=(end.y-p.y)/runDist;
-  p.x=manualClamp(p.x+vx*step,28,768);p.y=manualClamp(p.y+vy*step,30,470);g.ball={x:p.x,y:p.y};
-  if(Math.random()<manualClamp(.07+step/550,.07,.32)){g.notice='O defensor desarmou seu jogador!';manualFinishAttack(true,false)}else g.notice='⏸ Corrida realizada! Escolha passar, correr ou chutar.';
+  const dest={x:manualClamp(p.x+vx*step,28,768),y:manualClamp(p.y+vy*step,30,470)};
+  const pressure=Math.min(...g.foes.map(f=>Math.hypot(f.x-dest.x,f.y-dest.y)));
+  const tackled=Math.random()<manualClamp(.04+step/1000+(pressure<45?.3:pressure<80?.13:0),.04,.56);
+  g.notice=tackled?'🛡️ O marcador conseguiu desarmar!':'🏃 Boa arrancada! Escolha o próximo movimento.';
+  g.animation={kind:'run',elapsed:0,duration:manualClamp(step/280,.25,.72),from:{...p},to:dest,index:g.owner,finish:()=>{if(tackled)manualFinishAttack(true,false);else g.streak++}};
   return;
  }
  // Arrastar a partir do atleta ou usar o botão CHUTAR: direção e comprimento definem a força.
@@ -818,13 +832,15 @@ function manualShootGesture(start,end){
  const g=manualGame;if(!g||g.phase!=='attack')return;
  const len=Math.hypot(end.x-start.x,end.y-start.y);if(len<25){g.notice='Arraste mais longe para dar força ao chute.';return}
  const power=manualClamp(Math.round(len/2.3),12,100);const vx=(end.x-start.x)/len,vy=(end.y-start.y)/len;
- const p=g.players[g.owner],toGoal=vx>.25;const projection=(786-p.x)/Math.max(.1,vx),impactY=p.y+vy*projection;
- const onTarget=toGoal&&impactY>190&&impactY<310;
- const accuracy=manualClamp(.35+power/240-(power>85?.12:0)-Math.abs(impactY-250)/420,.08,.87);
+ const p=g.players[g.owner],toGoal=vx>.2;const projection=(786-p.x)/Math.max(.1,vx),impactY=p.y+vy*projection;
+ const onTarget=toGoal&&impactY>188&&impactY<312;
+ const distance=786-p.x,nearest=Math.min(...g.foes.map(f=>Math.hypot(f.x-p.x,f.y-p.y)));
+ const accuracy=manualClamp(.83-distance/1050+power/500-(power>90?.16:0)-(nearest<45?.13:0)-Math.abs(impactY-250)/420,.06,.91);
  const goal=onTarget&&Math.random()<accuracy;
  g.shots++;g.aim={x1:p.x,y1:p.y,x2:p.x+vx*manualClamp(len,60,240),y2:p.y+vy*manualClamp(len,60,240),power};
- g.notice=goal?`⚽ GOLAÇO! Chute com ${power}% de força!`:`🥅 Chute de ${power}% de força: ${onTarget?'defendido pelo goleiro!':'para fora!'}`;
- manualFinishAttack(true,goal);
+ g.notice=goal?`⚽ GOLAÇO! Chute com ${power}% de força!`:`🥅 Chute de ${power}%: ${onTarget?'defesa do goleiro!':'para fora!'}`;
+ const endX=manualClamp(p.x+vx*manualClamp(power*8,200,900),0,800),endY=manualClamp(p.y+vy*manualClamp(power*8,200,900),0,500);
+ g.animation={kind:'shot',elapsed:0,duration:.65,from:{...p},to:{x:endX,y:endY},finish:()=>manualFinishAttack(true,goal)};
 }
 function manualFinishAttack(ours,goal){const g=manualGame,m=liveMatch;if(!g||!m)return;if(goal){if(ours)m.own++;else m.away++}g.phase='resolution';g.phaseClock=0;g.drag=null;}
 function manualStop(){cancelAnimationFrame(manualFrame);manualFrame=0;manualGame=null;manualLast=0;}
@@ -834,6 +850,7 @@ function manualTick(ts){
  if(!m.paused){
   // O relógio de 90 segundos para apenas durante as decisões de ataque e defesa.
   if(g.phase==='between'||g.phase==='resolution'){g.clock+=dt;g.phaseClock+=dt;}
+  if(g.animation){const a=g.animation;a.elapsed+=dt;const t=manualClamp(a.elapsed/a.duration,0,1);g.ball={x:a.from.x+(a.to.x-a.from.x)*t,y:a.from.y+(a.to.y-a.from.y)*t};if(a.kind==='run'||a.kind==='tackle'){const p=g.players[a.index];p.x=g.ball.x;p.y=g.ball.y;}if(t>=1){g.animation=null;a.finish();}}
   m.minute=Math.min(90,Math.floor(g.clock));
   if(g.phase==='between'&&g.phaseClock>=manualClamp(4.2-g.turns*.08,2.4,4.2))manualSetupAttack(Math.random()<g.attackShare);
   if(g.phase==='resolution'&&g.phaseClock>=2.0){g.phase='between';g.phaseClock=0;g.aim=null;g.notice='⚽ Bola rolando no meio-campo. Próxima oportunidade em breve.'}
@@ -882,16 +899,17 @@ function manualDraw(ctx,g,m){
  if(['attack','defense','resolution'].includes(g.phase)){
   const all=[...g.foes.map((p,i)=>({p,shirt:'#e4483d',n:i+2,selected:false})),...g.players.map((p,i)=>({p,shirt:'#244fc4',n:i+6,selected:g.phase==='attack'&&i===g.owner}))];
   all.sort((a,b)=>a.p.x-b.p.x).forEach(o=>athlete(o.p,o.shirt,o.n,o.selected));
-  const ball=g.phase==='attack'?g.players[g.owner]:g.ball;if(ball){const q=pt(ball.x,ball.y);ctx.fillStyle='#fff';ctx.strokeStyle='#161616';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x+12,q.y+8,7,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(q.x+12,q.y+8,3,0,7);ctx.fill()}
+  const ball=g.animation?g.ball:g.phase==='attack'?g.players[g.owner]:g.ball;if(ball){const q=pt(ball.x,ball.y);ctx.fillStyle='#fff';ctx.strokeStyle='#161616';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x+12,q.y+8,7,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(q.x+12,q.y+8,3,0,7);ctx.fill()}
  }else{athlete({x:300,y:210},'#244fc4',10);athlete({x:440,y:275},'#e4483d',9);const q=pt(400,250);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(q.x,q.y,7,0,7);ctx.fill()}
+ if(g.animation&&g.animation.kind==='pass'){const a=pt(g.animation.from.x,g.animation.from.y),b=pt(g.animation.to.x,g.animation.to.y);ctx.save();ctx.setLineDash([8,7]);ctx.strokeStyle='#f9f8d2';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore()}
  if(g.drag){const a=pt(g.drag.start.x,g.drag.start.y),b=pt(g.drag.end.x,g.drag.end.y);ctx.strokeStyle=g.phase==='defense'?'#ffcf4e':'#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.fill()}
  if(g.aim){const a=pt(g.aim.x1,g.aim.y1),b=pt(g.aim.x2,g.aim.y2);ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
  // HUD permanece fixo, independente da câmera.
  ctx.fillStyle='rgba(17,29,29,.88)';ctx.fillRect(12,9,360,50);ctx.fillStyle='#fff';ctx.font='italic bold 23px system-ui';ctx.textAlign='left';ctx.fillText(`${careerName().slice(0,3).toUpperCase()} ${m.own} - ${m.away} ${(m.cup?m.oppName:countryLeagues[m.li].clubs[m.opp]).slice(0,3).toUpperCase()}`,24,42);
  ctx.fillStyle='rgba(17,29,29,.88)';ctx.fillRect(638,12,150,42);ctx.fillStyle='#fff';ctx.font='bold 19px system-ui';ctx.fillText(`${Math.floor(g.clock)} / 90 s`,650,40);
- if(['attack','defense'].includes(g.phase)){ctx.fillStyle='rgba(13,24,29,.83)';ctx.fillRect(220,460,360,30);ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('⏸ TEMPO CONGELADO',400,481)}
+ if(['attack','defense'].includes(g.phase)){ctx.fillStyle='rgba(13,24,29,.83)';ctx.fillRect(220,460,360,30);ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText(g.animation?'▶ EXECUTANDO JOGADA':'⏸ TEMPO CONGELADO',400,481)}
 }
-function renderManual(){return `<section class="panel manual-match"><h3>🎮 Partida 2D • Câmera atrás do gol</h3><h2 id="manualScore"></h2><strong id="manualPhase">▶ BOLA EM JOGO</strong><canvas id="manualPitch" style="width:100%;height:auto;touch-action:none;cursor:crosshair" aria-label="Campo de futebol interativo"></canvas><p id="manualNotice" class="muted"></p><p class="muted">⏱️ 90 segundos de bola rolando. Durante um ataque ou defesa o relógio congela para você decidir. A câmera mostra o gol adversário à frente, como na imagem de referência. <b>Atacando:</b> toque em um companheiro para passar; toque no campo para correr; arraste do jogador com a bola na direção do gol para chutar (comprimento = força). <b>Defendendo:</b> desenhe um traço na direção do adversário para dar carrinho. Funciona com mouse ou toque.</p><div class="row"><button class="secondary" id="pauseLive">${liveMatch.paused?'▶ Continuar':'⏸ Pausar'}</button><button class="secondary" id="manualEnd">⏭ Encerrar partida</button></div></section>`;}
+function renderManual(){return `<section class="panel manual-match"><h3>🎮 Partida 2D • Lances interativos</h3><h2 id="manualScore"></h2><strong id="manualPhase">▶ BOLA EM JOGO</strong><canvas id="manualPitch" style="width:100%;height:auto;touch-action:none;cursor:crosshair" aria-label="Campo de futebol interativo"></canvas><p id="manualNotice" class="muted"></p><p class="muted">⏱️ 90 segundos de bola rolando. Durante um ataque ou defesa o relógio congela para você decidir. A câmera frontal acompanha os lances, com passes, corridas e chutes animados. <b>Atacando:</b> toque em um companheiro para passar; toque no campo para correr; arraste do jogador com a bola na direção do gol para chutar (comprimento = força). <b>Defendendo:</b> desenhe um traço na direção do adversário para dar carrinho. Funciona com mouse ou toque.</p><div class="row"><button class="secondary" id="pauseLive">${liveMatch.paused?'▶ Continuar':'⏸ Pausar'}</button><button class="secondary" id="manualEnd">⏭ Encerrar partida</button></div></section>`;}
 function advanceLive(){
  const m=liveMatch;if(!m||m.paused)return;
  m.minute=Math.min(90,m.minute+m.speed);
