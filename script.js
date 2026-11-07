@@ -184,18 +184,32 @@ function statsTable(comp,kind){statsInit();const arr=Object.values(state.scorers
 function statsWidget(comp){return `<section class="panel"><h3>⚽ Artilharia</h3>${statsTable(comp,'goals')}</section><section class="panel"><h3>🎯 Líderes em assistências</h3>${statsTable(comp,'assists')}</section>`}
 function renderStatistics(){const names=statsCompetitionNames();const selected=names.find(n=>n.key===state.statsComp)||names[0];return `<section class="panel"><h3>⚽ Artilharia e 🎯 assistências — ${state.year}</h3><p class="muted">Estatísticas fictícias das partidas simuladas nesta versão. Partidas de versões anteriores não possuem autores de gols registrados.</p><select id="statsSelect" style="width:100%;padding:12px;border-radius:8px;background:#17251b;color:white;border:1px solid #516453">${names.map(n=>`<option value="${n.key}" ${n.key===selected.key?'selected':''}>${n.name}</option>`).join('')}</select></section>${statsWidget(selected.key)}`}
 
-// Resultado com vantagem de força moderada, mando e surpresas possíveis.
-function scorePower(ovrA,ovrB){
- const gap=Math.max(-30,Math.min(30,(ovrA||70)-(ovrB||70)));
- const expectation=Math.max(.35,Math.min(3.5,1.35+gap*.042));
- const shock=Math.random()<.12 ? .45+Math.random()*2.2 : 1;
- const lambda=expectation*shock;let goals=0,product=1,limit=Math.exp(-lambda);
- do{goals++;product*=Math.random()}while(product>limit&&goals<9);
- return Math.max(0,goals-1);
+// Cada clube tem fases diferentes a cada temporada: elencos fortes continuam favoritos,
+// mas o desempenho oscila e permite mais campeoes ao longo de carreiras longas.
+function seasonalForm(uid){
+ const year=Number(state.year)||2026;
+ const n=Math.sin((uid+17)*12.9898+(year-2000)*78.233)*43758.5453;
+ const v=(n-Math.floor(n))*2-1;
+ const n2=Math.sin((uid+41)*29.17+(year-2000)*11.91)*15678.231;
+ return v*4.5+((n2-Math.floor(n2))*2-1)*1.8;
+}
+function poissonGoals(lambda){
+ let k=0,prod=1,limit=Math.exp(-Math.max(.12,Math.min(5,lambda)));
+ do{k++;prod*=Math.random()}while(prod>limit&&k<10);
+ return k-1;
+}
+function scorePower(ovrA,ovrB,uidA=null,uidB=null){
+ const formA=uidA===null?0:seasonalForm(uidA);
+ const formB=uidB===null?0:seasonalForm(uidB);
+ const gap=Math.max(-38,Math.min(38,(ovrA||70)-(ovrB||70)+formA-formB));
+ // Favoritos vencem mais vezes, mas zebras, empates e goleadas seguem possiveis.
+ const upset=Math.random()<.12?(Math.random()-.5)*15:0;
+ const tempo=.85+Math.random()*.45;
+ return poissonGoals(Math.max(.3,Math.min(3.8,(1.35+gap*.042+upset*.035)*tempo)));
 }
 function getPower(uid){let li=Math.floor(uid/1000),idx=uid%1000;if(li===0)return strength(idx);let p=state.foreignPlayers[li][idx];return p.reduce((s,x)=>s+x.ovr,0)/p.length}
 function allClubNames(){return leaguePools.flat().map(t=>t.name)}
-function simulateForeignRound(li){const rounds=circleSchedule(leaguePools[li].length),r=state.countryRounds[li];if(r>=rounds.length)return false;for(let [a,b] of rounds[r]){let x=scorePower(getPower(clubUid(li,a)),getPower(clubUid(li,b))),y=scorePower(getPower(clubUid(li,b)),getPower(clubUid(li,a)));if(state.liveResult&&state.liveResult.li===li&&state.liveResult.round===r&&(a===state.careerClub||b===state.careerClub)){const home=a===state.careerClub;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateLeagueTable(state.countryTables[li],a,b,x,y);recordGoals("league-"+li,clubUid(li,a),clubUid(li,b),x,y)}state.countryRounds[li]++;return true}
+function simulateForeignRound(li){const rounds=circleSchedule(leaguePools[li].length),r=state.countryRounds[li];if(r>=rounds.length)return false;for(let [a,b] of rounds[r]){let x=scorePower(getPower(clubUid(li,a)),getPower(clubUid(li,b)),clubUid(li,a),clubUid(li,b)),y=scorePower(getPower(clubUid(li,b)),getPower(clubUid(li,a)),clubUid(li,b),clubUid(li,a));if(state.liveResult&&state.liveResult.li===li&&state.liveResult.round===r&&(a===state.careerClub||b===state.careerClub)){const home=a===state.careerClub;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateLeagueTable(state.countryTables[li],a,b,x,y);recordGoals("league-"+li,clubUid(li,a),clubUid(li,b),x,y)}state.countryRounds[li]++;return true}
 function updateLeagueTable(table,a,b,x,y){let A=table[a],B=table[b];A.p++;B.p++;A.gf+=x;A.ga+=y;B.gf+=y;B.ga+=x;if(x>y){A.w++;B.l++;A.pts+=3}else if(y>x){B.w++;A.l++;B.pts+=3}else{A.d++;B.d++;A.pts++;B.pts++}}
 function leagueRank(table){return [...table].sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf)}
 function newLibertadores(){
@@ -389,7 +403,7 @@ function fixtures(){let arr=teams.map((_,i)=>i),rounds=[];for(let r=0;r<19;r++){
 const schedule=fixtures();
 function opponent(){return schedule[state.round]?.find(p=>p.includes(state.club))?.find(id=>id!==state.club)}
 function strength(i){const arr=[...state.players[i]].sort((a,b)=>b.ovr-a.ovr).slice(0,11);return arr.reduce((s,p)=>s+p.ovr,0)/arr.length}
-function goals(i,j){const power=strength(i)-strength(j);return Math.max(0,Math.min(6,Math.round(1.25+power/15+(Math.random()-.5)*3.6)))}
+function goals(i,j){return scorePower(strength(i),strength(j),clubUid(0,i),clubUid(0,j))}
 function updateTable(a,b,x,y){const A=state.standings[a],B=state.standings[b];A.p++;B.p++;A.gf+=x;A.ga+=y;B.gf+=y;B.ga+=x;if(x>y){A.w++;B.l++;A.pts+=3}else if(x<y){B.w++;A.l++;B.pts+=3}else{A.d++;B.d++;A.pts++;B.pts++}}
 function play(){if(state.club===null)return;if(state.round>=19)return;const pairs=schedule[state.round];let summary;for(const [a,b] of pairs){let x=goals(a,b),y=goals(b,a);if(state.liveResult&&state.liveResult.li===0&&state.liveResult.round===state.round&&(a===state.club||b===state.club)){const home=a===state.club;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateTable(a,b,x,y);recordGoals("league-0",clubUid(0,a),clubUid(0,b),x,y);if(a===state.club||b===state.club){const mine=a===state.club,own=mine?x:y,other=mine?y:x,opp=mine?b:a;summary={round:state.round+1,opponent:teams[opp][0],own,other,year:state.year};state.budget+=own>other?2:own===other?0.8:0.25;}}state.results.push(summary);state.round++;payMonthlyWages();if(summary)satisfactionAfterMatch(summary.own,summary.other);save();render();alertMsg('Rodada '+state.round+': '+summary.own+' x '+summary.other)}
 function nextSeason(){if(state.round<19)return;const ranking=tableSorted(),pos=ranking.findIndex(t=>t.id===state.club)+1;state.history.push({year:state.year,position:pos,points:state.standings[state.club].pts});state.budget+=Math.max(5,40-pos*1.5);state.year++;state.dayOfYear=1;state.transferOffers={inbox:[],history:transferOffersInit().history,lastChecked:null,seq:transferOffersInit().seq};const retired=processRetirements();developYouth();const contractResult=expireContracts();state.nationalWorldCup=null;state.scorers={year:state.year,competitions:{}};state.round=0;state.countryTables=countryLeagues.map((_,li)=>makeLeagueTable(li));state.countryRounds=countryLeagues.map(()=>0);state.results=[];state.standings=teams.map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}));for(const team of state.players)for(const p of team){if(Math.random()<.4)p.ovr=Math.max(65,Math.min(93,p.ovr+(Math.random()<.65?1:-1)));if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10)}newLibertadores();newSudamericana();initExtraCups();if(fired){state.page='jobs';jobInit().offers=[];jobOffers(true)}save();render();alertMsg(fired?'Você foi demitido! Confira as propostas em Empregos.':'Bem-vindo à temporada '+state.year+'!')}
@@ -404,7 +418,7 @@ function careerRound(){return careerLeague()===0?state.round:state.countryRounds
 function careerSchedule(){return careerLeague()===0?schedule:circleSchedule(countryLeagues[careerLeague()].clubs.length)}
 function careerOpponent(){return careerSchedule()[careerRound()]?.find(p=>p.includes(state.careerClub))?.find(id=>id!==state.careerClub)}
 function careerSeasonEnd(){return careerRound()>=careerSchedule().length}
-function playCareer(){if(!synchronizedRoundGuard())return;const syncLi=careerLeague(),syncRound=careerRound();if(careerLeague()===0){play();markSynchronizedRound(syncLi,syncRound);return;}if(careerSeasonEnd())return;const li=careerLeague(),round=careerRound(),pairs=careerSchedule()[round];let summary;for(const [a,b] of pairs){let x=scorePower(getPower(clubUid(li,a)),getPower(clubUid(li,b))),y=scorePower(getPower(clubUid(li,b)),getPower(clubUid(li,a)));if(state.liveResult&&state.liveResult.li===li&&state.liveResult.round===round&&(a===state.careerClub||b===state.careerClub)){const home=a===state.careerClub;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateLeagueTable(state.countryTables[li],a,b,x,y);recordGoals("league-"+li,clubUid(li,a),clubUid(li,b),x,y);if(a===state.careerClub||b===state.careerClub){let mine=a===state.careerClub,own=mine?x:y,other=mine?y:x,opp=mine?b:a;summary={round:round+1,opponent:countryLeagues[li].clubs[opp],own,other,year:state.year};state.budget+=own>other?2:own===other?.8:.25;}}state.results.push(summary);state.countryRounds[li]++;payMonthlyWages();if(summary)satisfactionAfterMatch(summary.own,summary.other);markSynchronizedRound(syncLi,syncRound);save();render();alertMsg('Rodada '+(round+1)+': '+summary.own+' x '+summary.other)}
+function playCareer(){if(!synchronizedRoundGuard())return;const syncLi=careerLeague(),syncRound=careerRound();if(careerLeague()===0){play();markSynchronizedRound(syncLi,syncRound);return;}if(careerSeasonEnd())return;const li=careerLeague(),round=careerRound(),pairs=careerSchedule()[round];let summary;for(const [a,b] of pairs){let x=scorePower(getPower(clubUid(li,a)),getPower(clubUid(li,b)),clubUid(li,a),clubUid(li,b)),y=scorePower(getPower(clubUid(li,b)),getPower(clubUid(li,a)),clubUid(li,b),clubUid(li,a));if(state.liveResult&&state.liveResult.li===li&&state.liveResult.round===round&&(a===state.careerClub||b===state.careerClub)){const home=a===state.careerClub;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateLeagueTable(state.countryTables[li],a,b,x,y);recordGoals("league-"+li,clubUid(li,a),clubUid(li,b),x,y);if(a===state.careerClub||b===state.careerClub){let mine=a===state.careerClub,own=mine?x:y,other=mine?y:x,opp=mine?b:a;summary={round:round+1,opponent:countryLeagues[li].clubs[opp],own,other,year:state.year};state.budget+=own>other?2:own===other?.8:.25;}}state.results.push(summary);state.countryRounds[li]++;payMonthlyWages();if(summary)satisfactionAfterMatch(summary.own,summary.other);markSynchronizedRound(syncLi,syncRound);save();render();alertMsg('Rodada '+(round+1)+': '+summary.own+' x '+summary.other)}
 // Retrospectiva persistente de todas as competições simuladas no mundo do jogo.
 function seasonTopScorer(key){
  const rows=Object.values(state.scorers?.competitions?.[key]||{}).filter(r=>r.goals>0).sort((a,b)=>b.goals-a.goals||b.assists-a.assists);
@@ -899,7 +913,7 @@ function renderTactics(){const l=setupLineup(),roster=careerRoster(),slots=FORMA
 let cupLiveOverride=null;
 function cupPairScores(a,b){
  if(cupLiveOverride&&cupLiveOverride.a===a&&cupLiveOverride.b===b)return [cupLiveOverride.x,cupLiveOverride.y];
- return [scorePower(getPower(a),getPower(b)),scorePower(getPower(b),getPower(a))];
+ return [scorePower(getPower(a),getPower(b),a,b),scorePower(getPower(b),getPower(a),b,a)];
 }
 function controlledCupPair(pairs){
  const mine=clubUid(careerLeague(),state.careerClub);
