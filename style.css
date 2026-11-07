@@ -69,3 +69,9 @@ main{max-width:1700px;padding:22px 22px}.heading{margin-bottom:15px}.eyebrow{col
 
 /* Calendário completo */
 .calendar-controls{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:18px 0}.calendar-controls label{display:flex;flex-direction:column;gap:5px;font-weight:600}.calendar-controls input{padding:11px;border:1px solid #66598b;border-radius:8px;background:#151a2e;color:#fff;color-scheme:dark}.calendar-match-list{display:grid;gap:10px}.calendar-match{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px;border:1px solid #3c3a59;border-radius:10px;background:#1a1d30}.calendar-match>div{display:flex;flex-direction:column;gap:5px}.calendar-match small{color:#bcb8d6}.calendar-due{border-color:#c09b4e;background:#29263a}.calendar-alert{color:#f6cb78;font-weight:700}@media(max-width:650px){.calendar-match{flex-direction:column;align-items:stretch}.calendar-controls>*{flex:1 1 100%}}
+
+/* Felicidade individual dos jogadores */
+.player-happiness{display:flex;align-items:center;gap:8px;min-width:120px}.happiness-track{height:9px;width:88px;background:#344039;border-radius:99px;overflow:hidden}.happiness-track span{height:100%;display:block;border-radius:99px}.player-happiness strong{font-size:12px;white-space:nowrap}
+
+/* Modo de partida controlável */
+.manual-match{max-width:960px;margin:auto}.manual-match canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;border:3px solid #3d9d67;border-radius:12px;touch-action:none}.manual-controls{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:15px 0;flex-wrap:wrap}.manual-pad{display:grid;justify-items:center;gap:6px}.manual-pad>div{display:flex;gap:6px}.manual-actions{display:grid;grid-template-columns:repeat(2,minmax(100px,1fr));gap:8px}.manual-controls button{min-height:48px;touch-action:none;user-select:none;-webkit-user-select:none}.manual-pad button{min-width:58px}.manual-match h2{font-size:clamp(14px,3vw,24px)}
