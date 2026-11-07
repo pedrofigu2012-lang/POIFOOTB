@@ -779,7 +779,7 @@ function manualSetupAttack(ours){
 }
 function manualMount(){
  const c=document.getElementById('manualPitch');if(!c||!manualGame)return;c.width=800;c.height=500;
- const xy=e=>{const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*800/r.width,y:(e.clientY-r.top)*500/r.height}};
+ const xy=e=>{const r=c.getBoundingClientRect(),sx=(e.clientX-r.left)*800/r.width,sy=(e.clientY-r.top)*500/r.height;return manualUnproject(sx,sy)};
  c.onpointerdown=e=>{e.preventDefault();const g=manualGame;if(!g||liveMatch?.paused||!['attack','defense'].includes(g.phase))return;const p=xy(e);g.drag={start:p,end:p};try{c.setPointerCapture(e.pointerId)}catch(_){}};
  c.onpointermove=e=>{if(!manualGame?.drag)return;manualGame.drag.end=xy(e)};
  c.onpointerup=e=>{const g=manualGame;if(!g?.drag)return;g.drag.end=xy(e);const {start,end}=g.drag;g.drag=null;manualGesture(start,end)};
@@ -845,28 +845,53 @@ function manualTick(ts){
  const status=document.getElementById('manualPhase');if(status)status.textContent=g.phase==='attack'?'⏸ ATAQUE — TEMPO CONGELADO':g.phase==='defense'?'⏸ DEFESA — TEMPO CONGELADO':g.phase==='resolution'?'⚽ LANCE ENCERRADO':'▶ BOLA EM JOGO';
  manualFrame=requestAnimationFrame(manualTick);
 }
+// Câmera atrás do ataque: o gol adversário fica na parte inferior da tela.
+// A transformação inversa mantém os toques, passes, corridas e traços funcionais.
+function manualProject(x,y){const depth=.66+.00052*x;return {x:400+(y-250)*depth,y:45+x*.51}}
+function manualUnproject(sx,sy){const x=manualClamp((sy-45)/.51,0,800);return {x,y:manualClamp(250+(sx-400)/(.66+.00052*x),0,500)}}
 function manualDraw(ctx,g,m){
  const W=800,H=500;ctx.clearRect(0,0,W,H);
- ctx.fillStyle='#3e9b4d';ctx.fillRect(0,0,W,H);
- for(let i=0;i<16;i++){ctx.fillStyle=i%2?'#49a858':'#409a50';ctx.fillRect(i*50,0,50,H)}
- ctx.strokeStyle='#f4fff0';ctx.lineWidth=3;ctx.strokeRect(18,15,764,470);
- ctx.beginPath();ctx.moveTo(400,15);ctx.lineTo(400,485);ctx.stroke();ctx.beginPath();ctx.arc(400,250,68,0,Math.PI*2);ctx.stroke();
- ctx.strokeRect(18,140,118,220);ctx.strokeRect(664,140,118,220);ctx.strokeRect(18,190,45,120);ctx.strokeRect(737,190,45,120);
- for(const x of [8,782]){ctx.fillStyle='#e7f4e7';ctx.fillRect(x,197,10,106);ctx.strokeStyle='#fff';ctx.strokeRect(x,197,10,106);for(let y=204;y<300;y+=12){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+10,y);ctx.stroke()}}
- function athlete(p,shirt,num,selected=false){ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(7,12,13,7,0,0,7);ctx.fill();ctx.fillStyle='#26252b';ctx.fillRect(-8,5,6,10);ctx.fillRect(3,5,6,10);ctx.fillStyle=shirt;ctx.beginPath();ctx.ellipse(0,-2,12,11,0,0,7);ctx.fill();ctx.fillStyle='#d6a079';ctx.beginPath();ctx.arc(0,-14,8,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText(num,0,2);if(selected){ctx.strokeStyle='#fff456';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,21,0,7);ctx.stroke()}ctx.restore()}
- athlete({x:45,y:250},'#f2cc47',1);athlete({x:755,y:250},'#f2cc47',1);
- if(g.phase==='attack'||g.phase==='defense'||g.phase==='resolution'){
-  g.foes.forEach((p,i)=>athlete(p,'#e84c4b',i+2));g.players.forEach((p,i)=>athlete(p,'#2d4fa0',i+6,g.phase==='attack'&&i===g.owner));
-  const ball=g.phase==='attack'?g.players[g.owner]:g.ball;ctx.fillStyle='#fff';ctx.strokeStyle='#171717';ctx.lineWidth=2;ctx.beginPath();ctx.arc(ball.x+12,ball.y+8,8,0,7);ctx.fill();ctx.stroke();
-  if(g.phase==='attack'){ctx.fillStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.arc(ball.x,ball.y,65,0,7);ctx.fill()}
- }else{athlete({x:335,y:210},'#2d4fa0',10);athlete({x:455,y:270},'#e84c4b',9);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(400,250,8,0,7);ctx.fill()}
- if(g.drag){const a=g.drag.start,b=g.drag.end;ctx.strokeStyle=g.phase==='defense'?'#ffcf4e':'#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.fillStyle='#ffed9a';ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.fill()}
- if(g.aim){ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(g.aim.x1,g.aim.y1);ctx.lineTo(g.aim.x2,g.aim.y2);ctx.stroke()}
- ctx.fillStyle='rgba(12,25,29,.9)';ctx.fillRect(13,10,360,54);ctx.fillStyle='#fff';ctx.font='italic bold 23px system-ui';ctx.textAlign='left';ctx.fillText(`${careerName().slice(0,3).toUpperCase()} ${m.own} - ${m.away} ${(m.cup?m.oppName:countryLeagues[m.li].clubs[m.opp]).slice(0,3).toUpperCase()}`,25,44);
- ctx.fillStyle='rgba(12,25,29,.86)';ctx.fillRect(638,12,150,42);ctx.fillStyle='#fff';ctx.font='bold 19px system-ui';ctx.fillText(`${Math.floor(g.clock)} / 90 s`,650,40);
- if(['attack','defense'].includes(g.phase)){ctx.fillStyle='rgba(13,24,29,.82)';ctx.fillRect(220,458,360,30);ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('⏸ TEMPO CONGELADO',400,479)}
+ ctx.fillStyle='#799c0c';ctx.fillRect(0,0,W,H);
+ // Faixas de gramado vistas da arquibancada.
+ for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#789b0d':'#83a711';ctx.fillRect(0,i*46,W,46)}
+ const pt=(x,y)=>manualProject(x,y);
+ function line(points,width=3,color='#f5f6d5'){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();points.forEach(([x,y],i)=>{const q=pt(x,y);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.stroke()}
+ function box(x1,y1,x2,y2){line([[x1,y1],[x2,y1],[x2,y2],[x1,y2],[x1,y1]])}
+ box(0,0,800,500);line([[130,0],[130,500]]);line([[630,0],[630,500]]);box(600,105,800,395);box(730,175,800,325);
+ // Arco frontal da grande área, diante do gol.
+ ctx.beginPath();for(let i=0;i<=48;i++){const t=Math.PI+(i/48)*Math.PI;const q=pt(600+72*Math.sin(t),250+72*Math.cos(t));i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)}ctx.strokeStyle='#f5f6d5';ctx.lineWidth=3;ctx.stroke();
+ // Gol frontal com rede em perspectiva.
+ const L=pt(790,188),R=pt(790,312),BL={x:L.x+15,y:498},BR={x:R.x-15,y:498};
+ ctx.fillStyle='rgba(220,237,221,.13)';ctx.beginPath();ctx.moveTo(L.x,L.y);ctx.lineTo(R.x,R.y);ctx.lineTo(BR.x,BR.y);ctx.lineTo(BL.x,BL.y);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.strokeRect(L.x,L.y,R.x-L.x,498-L.y);
+ ctx.strokeStyle='rgba(255,255,255,.43)';ctx.lineWidth=.8;
+ for(let i=1;i<17;i++){const x=L.x+(R.x-L.x)*i/17;ctx.beginPath();ctx.moveTo(x,L.y);ctx.lineTo(x,498);ctx.stroke()}
+ for(let i=1;i<10;i++){const y=L.y+(498-L.y)*i/10;ctx.beginPath();ctx.moveTo(L.x,y);ctx.lineTo(R.x,y);ctx.stroke()}
+ function athlete(p,shirt,num,selected=false,keeper=false){
+  const q=pt(p.x,p.y),scale=.72+p.x/1000;ctx.save();ctx.translate(q.x,q.y);ctx.scale(scale,scale);
+  ctx.fillStyle='rgba(15,27,10,.3)';ctx.beginPath();ctx.ellipse(10,16,13,5,0,0,7);ctx.fill();
+  ctx.fillStyle='#262b39';ctx.fillRect(-8,4,6,14);ctx.fillRect(3,4,6,14);
+  ctx.fillStyle=keeper?'#33b867':shirt;ctx.beginPath();ctx.ellipse(0,-3,12,12,0,0,7);ctx.fill();
+  ctx.fillStyle='#f0b889';ctx.fillRect(-15,-8,5,13);ctx.fillRect(10,-8,5,13);ctx.beginPath();ctx.arc(0,-18,9,0,7);ctx.fill();
+  ctx.fillStyle='#30251d';ctx.beginPath();ctx.arc(0,-22,8,Math.PI,2*Math.PI);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(num,0,0);
+  if(selected){ctx.strokeStyle='#f9ef54';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,13,23,9,0,0,7);ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 20px system-ui';ctx.fillText('▼',0,-40)}ctx.restore();
+ }
+ // Goleiro dentro da baliza, jogadores com aparência de bonecos.
+ athlete({x:766,y:250},'#36b869',1,false,true);
+ if(['attack','defense','resolution'].includes(g.phase)){
+  const all=[...g.foes.map((p,i)=>({p,shirt:'#e4483d',n:i+2,selected:false})),...g.players.map((p,i)=>({p,shirt:'#244fc4',n:i+6,selected:g.phase==='attack'&&i===g.owner}))];
+  all.sort((a,b)=>a.p.x-b.p.x).forEach(o=>athlete(o.p,o.shirt,o.n,o.selected));
+  const ball=g.phase==='attack'?g.players[g.owner]:g.ball;if(ball){const q=pt(ball.x,ball.y);ctx.fillStyle='#fff';ctx.strokeStyle='#161616';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x+12,q.y+8,7,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(q.x+12,q.y+8,3,0,7);ctx.fill()}
+ }else{athlete({x:300,y:210},'#244fc4',10);athlete({x:440,y:275},'#e4483d',9);const q=pt(400,250);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(q.x,q.y,7,0,7);ctx.fill()}
+ if(g.drag){const a=pt(g.drag.start.x,g.drag.start.y),b=pt(g.drag.end.x,g.drag.end.y);ctx.strokeStyle=g.phase==='defense'?'#ffcf4e':'#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.beginPath();ctx.arc(b.x,b.y,7,0,7);ctx.fill()}
+ if(g.aim){const a=pt(g.aim.x1,g.aim.y1),b=pt(g.aim.x2,g.aim.y2);ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+ // HUD permanece fixo, independente da câmera.
+ ctx.fillStyle='rgba(17,29,29,.88)';ctx.fillRect(12,9,360,50);ctx.fillStyle='#fff';ctx.font='italic bold 23px system-ui';ctx.textAlign='left';ctx.fillText(`${careerName().slice(0,3).toUpperCase()} ${m.own} - ${m.away} ${(m.cup?m.oppName:countryLeagues[m.li].clubs[m.opp]).slice(0,3).toUpperCase()}`,24,42);
+ ctx.fillStyle='rgba(17,29,29,.88)';ctx.fillRect(638,12,150,42);ctx.fillStyle='#fff';ctx.font='bold 19px system-ui';ctx.fillText(`${Math.floor(g.clock)} / 90 s`,650,40);
+ if(['attack','defense'].includes(g.phase)){ctx.fillStyle='rgba(13,24,29,.83)';ctx.fillRect(220,460,360,30);ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('⏸ TEMPO CONGELADO',400,481)}
 }
-function renderManual(){return `<section class="panel manual-match"><h3>🎮 Partida 2D • Ataques e defesas</h3><h2 id="manualScore"></h2><strong id="manualPhase">▶ BOLA EM JOGO</strong><canvas id="manualPitch" style="width:100%;height:auto;touch-action:none;cursor:crosshair" aria-label="Campo de futebol interativo"></canvas><p id="manualNotice" class="muted"></p><p class="muted">⏱️ 90 segundos de bola rolando. Durante um ataque ou defesa o relógio congela para você decidir. <b>Atacando:</b> toque em um companheiro para passar; toque no campo para correr; arraste do jogador com a bola na direção do gol para chutar (comprimento = força). <b>Defendendo:</b> desenhe um traço na direção do adversário para dar carrinho. Funciona com mouse ou toque.</p><div class="row"><button class="secondary" id="pauseLive">${liveMatch.paused?'▶ Continuar':'⏸ Pausar'}</button><button class="secondary" id="manualEnd">⏭ Encerrar partida</button></div></section>`;}
+function renderManual(){return `<section class="panel manual-match"><h3>🎮 Partida 2D • Câmera atrás do gol</h3><h2 id="manualScore"></h2><strong id="manualPhase">▶ BOLA EM JOGO</strong><canvas id="manualPitch" style="width:100%;height:auto;touch-action:none;cursor:crosshair" aria-label="Campo de futebol interativo"></canvas><p id="manualNotice" class="muted"></p><p class="muted">⏱️ 90 segundos de bola rolando. Durante um ataque ou defesa o relógio congela para você decidir. A câmera mostra o gol adversário à frente, como na imagem de referência. <b>Atacando:</b> toque em um companheiro para passar; toque no campo para correr; arraste do jogador com a bola na direção do gol para chutar (comprimento = força). <b>Defendendo:</b> desenhe um traço na direção do adversário para dar carrinho. Funciona com mouse ou toque.</p><div class="row"><button class="secondary" id="pauseLive">${liveMatch.paused?'▶ Continuar':'⏸ Pausar'}</button><button class="secondary" id="manualEnd">⏭ Encerrar partida</button></div></section>`;}
 function advanceLive(){
  const m=liveMatch;if(!m||m.paused)return;
  m.minute=Math.min(90,m.minute+m.speed);
