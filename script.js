@@ -549,7 +549,18 @@ function simulateWholeYears(){
  if(btn)btn.disabled=true;
  bulkYearsRunning=true;
  let matches=0,iterations=0;
- const restore=msg=>{bulkYearsRunning=false;save();state.page=state.jobStatus==='fired'?'jobs':'calendar';render();alertMsg(msg);};
+ const restore=msg=>{
+  // Destrava a interface ANTES de salvar/renderizar; mesmo se o armazenamento falhar.
+  bulkYearsRunning=false;
+  state.page=state.jobStatus==='fired'?'jobs':'calendar';
+  try{save();}catch(error){console.error('Falha ao salvar a carreira após simulação',error);msg+=' (Aviso: armazenamento cheio; exporte ou libere espaço no navegador.)';}
+  try{render();}catch(error){console.error('Falha ao redesenhar o calendário',error);}
+  const currentStatus=document.getElementById('calendarYearsStatus');
+  if(currentStatus)currentStatus.textContent=msg;
+  const currentButton=document.getElementById('calendarYearsButton');
+  if(currentButton)currentButton.disabled=false;
+  alertMsg(msg);
+ };
  function autoJob(){
   if(state.jobStatus!=='fired')return true;
   const offers=jobOffers(true);
@@ -583,7 +594,13 @@ function simulateWholeYears(){
     if(state.year===before){restore('Não foi possível iniciar a próxima temporada.');return;}
    }
    label('⏳ '+(state.year-startYear)+' de '+count+' temporada(s) • '+matches+' rodadas simuladas');
-   if(state.year>=targetYear){state.dayOfYear=1;restore('✅ '+count+' temporada(s) simulada(s)! Ano atual: '+state.year+'.');return;}
+   if(state.year>=targetYear){
+    state.dayOfYear=1;
+    label('✅ Simulação concluída! Finalizando e salvando...');
+    // Permite que a mensagem de conclusão apareça antes de salvar a carreira.
+    setTimeout(()=>restore('✅ '+count+' temporada(s) simulada(s)! Ano atual: '+state.year+'.'),0);
+    return;
+   }
    setTimeout(tick,0);
   }catch(err){console.error('POIFOOTB: erro na simulação de anos',err);restore('Simulação interrompida: '+(err?.message||'erro inesperado'));}
  }
