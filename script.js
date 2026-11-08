@@ -191,7 +191,7 @@ function seasonalForm(uid){
  const n=Math.sin((uid+17)*12.9898+(year-2000)*78.233)*43758.5453;
  const v=(n-Math.floor(n))*2-1;
  const n2=Math.sin((uid+41)*29.17+(year-2000)*11.91)*15678.231;
- return v*5.3+((n2-Math.floor(n2))*2-1)*2.1;
+ return v*8.1+((n2-Math.floor(n2))*2-1)*3.2;
 }
 function poissonGoals(lambda){
  let k=0,prod=1,limit=Math.exp(-Math.max(.12,Math.min(5,lambda)));
@@ -203,9 +203,9 @@ function scorePower(ovrA,ovrB,uidA=null,uidB=null){
  const formB=uidB===null?0:seasonalForm(uidB);
  const gap=Math.max(-38,Math.min(38,(ovrA||70)-(ovrB||70)+formA-formB));
  // Favoritos vencem mais vezes, mas zebras, empates e goleadas seguem possiveis.
- const upset=Math.random()<.17?(Math.random()-.5)*18:0;
+ const upset=Math.random()<.24?(Math.random()-.5)*21:0;
  const tempo=.85+Math.random()*.45;
- return poissonGoals(Math.max(.3,Math.min(3.8,(1.35+gap*.042+upset*.035)*tempo)));
+ return poissonGoals(Math.max(.3,Math.min(3.8,(1.35+gap*.034+upset*.042)*tempo)));
 }
 function getPower(uid){let li=Math.floor(uid/1000),idx=uid%1000;if(li===0)return strength(idx);let p=state.foreignPlayers[li][idx];return p.reduce((s,x)=>s+x.ovr,0)/p.length}
 function allClubNames(){return leaguePools.flat().map(t=>t.name)}
@@ -916,11 +916,11 @@ function cupPairScores(a,b){
  // Mata-mata: a diferenca de forca pesa menos e a variacao do confronto e maior.
  // O modificador e compartilhado entre os dois lados para evitar duas rolagens independentes.
  const powerA=getPower(a),powerB=getPower(b);
- const gap=Math.max(-35,Math.min(35,(powerA-powerB)*.69+(seasonalForm(a)-seasonalForm(b))*.6));
- const swing=(Math.random()-.5)*13;
+ const gap=Math.max(-35,Math.min(35,(powerA-powerB)*.54+(seasonalForm(a)-seasonalForm(b))*.85));
+ const swing=(Math.random()-.5)*18;
  const pace=.83+Math.random()*.48;
- return [poissonGoals(Math.max(.25,Math.min(4,(1.4+gap*.043+swing*.055)*pace))),
-         poissonGoals(Math.max(.25,Math.min(4,(1.4-gap*.043-swing*.055)*pace)))];
+ return [poissonGoals(Math.max(.25,Math.min(4,(1.4+gap*.041+swing*.061)*pace))),
+         poissonGoals(Math.max(.25,Math.min(4,(1.4-gap*.041-swing*.061)*pace)))];
 }
 function controlledCupPair(pairs){
  const mine=clubUid(careerLeague(),state.careerClub);
