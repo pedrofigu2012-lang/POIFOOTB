@@ -1,4 +1,4 @@
-// Base ilustrativa de atletas conhecidos. Clubes, vínculos, idades e notas não são um cadastro oficial atualizado.
+// Base ilustrativa de atletas conhecidos. Overalls calibrados por estimativas inspiradas no EA FC 27, não são notas oficiais nem elencos atualizados.
 const teams=[
 ['Flamengo','FLA',[['Pedro','ATA',87],['Arrascaeta','MEI',88],['Léo Ortiz','ZAG',83],['Agustín Rossi','GOL',83],['Léo Pereira','ZAG',82],['Bruno Henrique','ATA',81]]],
 ['Palmeiras','PAL',[['Vitor Roque','ATA',84],['Gustavo Gómez','ZAG',85],['Andreas Pereira','MEI',83],['Flaco López','ATA',82],['Piquerez','LE',82],['Weverton','GOL',81]]],
@@ -121,6 +121,37 @@ function clubUid(li,i){return li*1000+i}
 function getClubByUid(uid){return leaguePools[Math.floor(uid/1000)]?.[uid%1000]}
 function makeLeagueTable(li){return leaguePools[li].map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}))}
 function circleSchedule(n){let arr=Array.from({length:n},(_,i)=>i);if(n%2){arr.push(-1);n++}const out=[];for(let r=0;r<n-1;r++){let matches=[];for(let j=0;j<n/2;j++){const a=arr[j],b=arr[n-1-j];if(a>=0&&b>=0)matches.push([a,b])}out.push(matches);arr=[arr[0],arr[n-1],...arr.slice(1,n-1)]}return out}
+// Avaliações estimadas no estilo EA SPORTS FC 27 — NÃO são notas oficiais da EA.
+// Nomes selecionados têm valores individualizados; demais atletas usam ajuste moderado por liga.
+const FC27_ESTIMATES = Object.fromEntries([
+ ['Kylian Mbappé',91],['Erling Haaland',91],['Jude Bellingham',90],['Vinícius Júnior',90],['Mohamed Salah',90],['Rodri',90],['Harry Kane',90],['Lamine Yamal',90],['Ousmane Dembélé',89],['Raphinha',89],['Pedri',89],['Federico Valverde',89],['Florian Wirtz',89],['Bukayo Saka',88],['Declan Rice',88],['Virgil van Dijk',89],['Alisson',89],['Thibaut Courtois',89],['Gianluigi Donnarumma',89],['William Saliba',88],['Gabriel Magalhães',87],['Martin Ødegaard',87],['Cole Palmer',87],['Alexander Isak',88],['Phil Foden',87],['Kevin De Bruyne',87],['Bernardo Silva',86],['Rúben Dias',87],['Bruno Fernandes',87],['Martin Zubimendi',85],['Martín Zubimendi',85],['David Raya',86],['Robert Lewandowski',87],['Frenkie de Jong',86],['Jules Koundé',86],['Ronald Araújo',85],['Dani Olmo',85],['Ferran Torres',83],['João Cancelo',84],['Fermín López',83],['Raphinha',89],['Antoine Griezmann',86],['Julián Álvarez',87],['Jan Oblak',87],['Álex Baena',84],['Nico Williams',85],['Mikel Oyarzabal',84],['Lautaro Martínez',89],['Nicolò Barella',87],['Alessandro Bastoni',87],['Federico Dimarco',85],['Marcus Thuram',85],['Hakan Çalhanoğlu',85],['Denzel Dumfries',83],['Yann Sommer',83],['Christian Pulisic',85],['Rafael Leão',85],['Mike Maignan',85],['Paulo Dybala',85],['Romelu Lukaku',83],['Scott McTominay',84],['Joshua Kimmich',88],['Michael Olise',87],['Jamal Musiala',88],['Luis Díaz',86],['Dayot Upamecano',85],['Alphonso Davies',84],['Manuel Neuer',82],['Serhou Guirassy',85],['Nico Schlotterbeck',85],['Florian Neuhaus',78],['Achraf Hakimi',88],['Vitinha',88],['João Neves',86],['Khvicha Kvaratskhelia',87],['Marquinhos',85],['Nuno Mendes',86],['Bradley Barcola',84],
+ ['Neymar',83],['Arrascaeta',84],['Pedro',82],['Léo Ortiz',81],['Agustín Rossi',80],['Léo Pereira',80],['Bruno Henrique',78],['Vitor Roque',82],['Gustavo Gómez',81],['Andreas Pereira',80],['Flaco López',79],['Piquerez',79],['Weverton',78],['Yuri Alberto',80],['Hugo Souza',79],['Breno Bidon',77],['Rodrigo Garro',80],['Memphis Depay',81],['Raniele',76],['Gabigol',78],['Gabriel Brazão',77],['Lucas Moura',79],['Calleri',78],['Thiago Silva',80],['Germán Cano',77],['Fábio',77],['Marlon Freitas',79],['Alexander Barboza',79],['Savarino',79],['Kaio Jorge',82],['Matheus Pereira',82],['Cássio',77],['Gerson',80],['Hulk',80],['Everson',79],['Guilherme Arana',79],['Gustavo Scarpa',78],['Alan Patrick',80],['Rochet',78],['Everton Ribeiro',77],['Cauly',77],['Philippe Coutinho',78],['Vegetti',77],['Léo Jardim',78],['Pedro Morisco',74],['Lucas Ronier',73],['Josué',75],['Pedro Rocha',74],['Leandro Paredes',82],['Franco Armani',77],['Gonzalo Montiel',78],['Edinson Cavani',74],['Miguel Merentiel',77],['Arturo Vidal',74],['David Ospina',75],['Radamel Falcao',72]
+].map(([name,ovr])=>[name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),ovr]));
+function fc27Estimate(p,li){
+ if(!p||p.placeholder||!p.name||p.name.startsWith('Atleta a confirmar'))return null;
+ const key=p.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ if(FC27_ESTIMATES[key]!==undefined)return FC27_ESTIMATES[key];
+ const current=Number(p.ovr);if(!Number.isFinite(current))return null;
+ // Ajustes suaves para os jogadores sem nota individual; evita inventar dados oficiais.
+ const target=li===0?75:li>=10&&li<=14?79:li>=15?69:74;
+ return Math.max(58,Math.min(90,Math.round(current*.80+target*.20)));
+}
+function applyFC27EstimatedRatings(){
+ if(state.fc27EstimatesVersion===1)return;
+ let changed=0;
+ for(const [li,clubs] of [[0,state.players],...(state.foreignPlayers||[]).map((clubs,i)=>[i,clubs]).filter(([i])=>i!==0)]){
+  if(!Array.isArray(clubs))continue;
+  for(const roster of clubs){if(!Array.isArray(roster))continue;
+   for(const p of roster){const next=fc27Estimate(p,li);if(next===null)continue;
+    p.ovr=next;p.fc27Estimated=true;
+    if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((next-65)*1.1*10)/10);
+    changed++;
+   }
+  }
+ }
+ state.fc27EstimatesVersion=1;
+ state.fc27EstimatedCount=changed;
+}
 function ensureExpansion(){
  if(state.brazilDivisionNames)syncBrazilDivisions();
  if(!state.country && state.country!==0)state.country=0;
@@ -165,6 +196,7 @@ function ensureExpansion(){
    }
   }
  }
+ applyFC27EstimatedRatings();
  if(state.viewClub===undefined)state.viewClub=null;
  if(!state.continental)state.continental={year:state.year,round:0,fixtures:[],results:[],champion:null,qualified:false};
  if(!state.careerCountry && state.careerCountry!==0)state.careerCountry=0;
