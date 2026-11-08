@@ -78,3 +78,22 @@ main{max-width:1700px;padding:22px 22px}.heading{margin-bottom:15px}.eyebrow{col
 
 /* Escolha de modo antes de iniciar cada jogo */
 .match-mode-panel{max-width:980px;margin:0 auto;padding:28px!important}.match-mode-panel h2{font-size:clamp(26px,4vw,38px);margin:8px 0}.match-mode-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:25px 0}.match-mode-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:13px;min-height:255px;padding:26px;border:2px solid #425a54;border-radius:18px;background:linear-gradient(145deg,#1e3332,#101d25);color:#f3faf5;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}.match-mode-card:hover,.match-mode-card:focus-visible{transform:translateY(-3px);border-color:#7cdd9c;box-shadow:0 10px 30px #0004}.match-mode-card strong{font-size:25px}.match-mode-card small{font-size:14px;line-height:1.55;color:#c7d5d0}.match-mode-icon{font-size:42px}.match-mode-action{margin-top:auto;padding:10px 14px;border-radius:10px;background:#55a96f;color:#081d12;font-weight:800}@media(max-width:620px){.match-mode-options{grid-template-columns:1fr}.match-mode-card{min-height:205px;padding:19px}}
+
+/* Elenco e escalação: campo vertical com jogadores em suas posições */
+.squad-board{max-width:760px;margin:20px auto;border-radius:16px;overflow:hidden;box-shadow:0 14px 34px #0003;background:#092d20;color:#fff}
+.squad-board-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:15px 20px;background:#092e22;letter-spacing:.05em}
+.squad-board-header span{font-size:.8rem;opacity:.8}
+.squad-grass{position:relative;isolation:isolate;min-height:590px;padding:30px 20px;display:flex;flex-direction:column;justify-content:space-around;border:5px solid #159767;background:repeating-linear-gradient(0deg,#0e8c55 0px,#0e8c55 68px,#119b60 68px,#119b60 136px)}
+.squad-grass:before{content:"";position:absolute;inset:12px;border:2px solid #ffffff7d;pointer-events:none;z-index:-1}
+.squad-midline{position:absolute;top:50%;left:12px;right:12px;border-top:2px solid #ffffff7d;z-index:-1}
+.squad-centercircle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:125px;height:125px;border:2px solid #ffffff7d;border-radius:50%;z-index:-1}
+.squad-area{position:absolute;left:25%;width:50%;height:85px;border:2px solid #ffffff7d;z-index:-1}
+.squad-area-top{top:12px;border-top:0}.squad-area-bottom{bottom:12px;border-bottom:0}
+.squad-field-row{display:flex;justify-content:space-around;align-items:center;gap:5px;position:relative;width:100%}
+.squad-field-player{width:18%;min-width:0;text-align:center;display:flex;align-items:center;flex-direction:column;gap:3px;text-shadow:0 1px 3px #0008}
+.squad-shirt{width:38px;height:39px;background:#fff;color:#17382b;clip-path:polygon(18% 0,34% 8%,66% 8%,82% 0,100% 22%,85% 39%,78% 30%,78% 100%,22% 100%,22% 30%,15% 39%,0 22%);display:grid;place-items:center;padding-top:4px;font-size:13px;font-weight:900;text-shadow:none}
+.squad-field-name{font-size:11px;line-height:1.15;font-weight:800;background:#102b24e8;padding:4px 6px;border-radius:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.squad-field-rating{font-size:10px;font-weight:700;color:#d2ffe5}
+.squad-field-select{max-width:100%;width:100%;font-size:10px;padding:5px 2px;border-radius:6px;background:#fff;color:#10251c;border:0;text-shadow:none}
+.squad-quick-actions{display:flex;justify-content:center;margin:12px 0 22px}
+@media(max-width:600px){.squad-grass{min-height:510px;padding:20px 6px}.squad-shirt{width:30px;height:32px;font-size:11px}.squad-field-name{font-size:9px;padding:3px}.squad-field-rating{font-size:9px}.squad-field-player{width:20%}.squad-field-select{font-size:9px}.squad-board-header{padding:12px;font-size:12px}}
