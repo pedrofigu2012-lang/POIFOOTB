@@ -101,3 +101,10 @@ main{max-width:1700px;padding:22px 22px}.heading{margin-bottom:15px}.eyebrow{col
 /* Nova carreira fica dentro do menu lateral somente no celular. */
 .mobile-new-career{display:none}
 @media(max-width:900px){.header-info #reset{display:none}.mobile-new-career{display:block;width:100%;margin:16px 0 8px;padding:14px 12px;background:#35243c;border:1px solid #ae79c4;border-radius:10px;color:#f7eaff;font-weight:800;text-align:left;min-height:48px}.mobile-new-career:hover{background:#493050}}
+
+/* Modo seleção: convocação adaptada ao celular */
+.national-callup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;margin:12px 0 20px}
+.national-callup-item{display:flex;gap:9px;align-items:center;padding:10px;border:1px solid rgba(130,155,155,.3);border-radius:10px;cursor:pointer}
+.national-callup-item input{width:18px;height:18px;flex-shrink:0;accent-color:#43bc8b}
+.national-callup-item small{display:block;opacity:.7}
+@media(max-width:600px){.national-callup-grid{grid-template-columns:1fr}.national-callup-item{padding:12px}}
