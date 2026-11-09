@@ -108,3 +108,5 @@ main{max-width:1700px;padding:22px 22px}.heading{margin-bottom:15px}.eyebrow{col
 .national-callup-item input{width:18px;height:18px;flex-shrink:0;accent-color:#43bc8b}
 .national-callup-item small{display:block;opacity:.7}
 @media(max-width:600px){.national-callup-grid{grid-template-columns:1fr}.national-callup-item{padding:12px}}
+
+.sub-panel{margin:16px 0;padding:16px;border:1px solid #557a61;border-radius:12px;background:#193324}.sub-panel select{max-width:100%;padding:9px;margin:5px;background:#10291c;color:#fff;border:1px solid #557a61;border-radius:8px}
