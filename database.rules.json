@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "salas": {
+      "$salaId": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.child('criador').val() === auth.uid && newData.child('jogadores').child(auth.uid).exists()",
+        "criador": {".validate": "newData.isString()"},
+        "jogadores": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && data.parent().parent().exists() && (!data.exists() || newData.exists())",
+            ".validate": "newData.hasChildren(['nome', 'clube', 'pronto']) && newData.child('nome').isString() && newData.child('nome').val().length <= 40 && newData.child('clube').isString() && newData.child('pronto').isBoolean()"
+          }
+        }
+      }
+    }
+  }
+}
