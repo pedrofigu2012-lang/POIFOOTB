@@ -1,0 +1,5 @@
+POIFOOTB — Tema completo por clube
+
+Atualize index.html, style.css e atualizacao-menu.js no GitHub. Os demais arquivos do pacote são mantidos sem alterações.
+Faça backup do repositório e dos saves antes de instalar.
+O tema muda ao escolher um clube, preservando as cores primária e secundária já cadastradas.
