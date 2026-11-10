@@ -1,8 +1,10 @@
-POIFOOTB - Bundesliga e Ligue 1
+POIFOOTB - Simulação de 100 temporadas
 
-Adiciona 18 clubes alemães e 18 franceses (36 clubes) com 18 vagas por elenco (648 vagas).
-Os 11 clubes principais incluídos têm referências nominais de 18 atletas cada; os outros mantêm vagas 'Atleta a confirmar' para evitar inventar nomes.
-Os vínculos dos atletas são referências históricas/recentes, NÃO elencos oficiais de novembro de 2026.
-A Champions League simulada passa a incluir clubes das cinco ligas europeias e continua obrigatória para carreiras europeias.
+1. Faça backup dos arquivos atuais do GitHub.
+2. Substitua index.html, script.js e style.css na raiz do repositório POIFOOTB.
+3. Não altere online.html nem firebase-config.js.
+4. Abra o jogo, escolha um clube e vá em Calendário.
+5. Clique em Simular 100 temporadas automaticamente.
 
-Instalação: envie index.html, style.css e script.js para a raiz do repositório GitHub Pages.
+A simulação é para carreira individual, não para o multiplayer online.
+O jogo tenta simular as ligas e copas presentes nesta versão e guardar histórico. Algumas competições especiais dependem do calendário interno. Faça backup do save antes de simular.
