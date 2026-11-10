@@ -1,11 +1,8 @@
-POIFOOTB · Arena 2D
+POIFOOTB — Notas por partida e Melhor Jogador do Mundo
 
-1. No GitHub do POIFOOTB, use Add file > Upload files.
-2. Envie partida.html para a raiz do repositório.
-3. Clique em Commit changes.
-4. Abra https://pedrofigu2012-lang.github.io/POIFOOTB/partida.html
-
-Opcional: adicione ao menu do index.html um link:
-<a href="partida.html">⚽ Partida 2D</a>
-
-Esta é uma partida arcade independente para testes, não está integrada à carreira ou ao multiplayer Firebase. Não substitua seus arquivos existentes.
+Atualize index.html, script.js e style.css no GitHub.
+As notas de 3,0 a 10,0 são simuladas para 11 jogadores por clube em partidas processadas por recordGoals.
+Estatísticas > Notas: média da temporada e notas da última partida simulada.
+Melhor jogador do mundo considera nota média, quantidade de jogos, gols e assistências.
+Resultados antigos não terão notas retroativas.
+Faça backup do seu jogo antes de substituir arquivos.
