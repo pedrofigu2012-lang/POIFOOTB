@@ -131,3 +131,6 @@ nav button.active,nav button.poi-current{background:linear-gradient(95deg,color-
 .manager-topnav button:hover{color:var(--club-accent)}
 .poi-schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.poi-fixture{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #334456}.poi-fixture>div{flex:1;min-width:0}.poi-fixture strong{display:block;font-size:12px}.poi-fixture small{display:block;color:#a9b8c8;margin-top:4px}.poi-fixture-date{font-size:11px;color:#b5c7d8;min-width:94px}.poi-fixture button{padding:8px 10px;font-size:11px}
 @media(max-width:800px){.poi-schedule-grid{grid-template-columns:1fr}.poi-fixture-date{min-width:75px}.poi-fixture{gap:7px}}
+
+/* Ajustes visuais do painel */
+:root{--poi-radius:14px} nav button,.manager-topnav button{transition:background .18s,transform .18s,border-color .18s}nav button:hover,.manager-topnav button:hover{transform:translateX(2px)}.panel,.hero{border-radius:var(--poi-radius)}button:focus-visible,a:focus-visible{outline:3px solid #7eeac1;outline-offset:2px}#app:empty::before{content:'Carregando sua carreira…';display:block;padding:24px;color:#cdebdc} @media(max-width:720px){.manager-topnav{overflow-x:auto;white-space:nowrap}.heading{padding-bottom:12px}}

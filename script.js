@@ -1,3 +1,5 @@
+const LATIN_LEAGUES=new Set([0,1,2,3,4,5,6,7,8,9,15,16,17]);
+const latinPrice=(price,li)=>LATIN_LEAGUES.has(li)?Math.round(Number(price)*4)/10:Number(price);
 // Base ilustrativa de atletas conhecidos. Overalls calibrados por estimativas inspiradas no EA FC 27, não são notas oficiais nem elencos atualizados.
 const teams=[
 ['Flamengo','FLA',[['Pedro','ATA',87],['Arrascaeta','MEI',88],['Léo Ortiz','ZAG',83],['Agustín Rossi','GOL',83],['Léo Pereira','ZAG',82],['Bruno Henrique','ATA',81]]],
@@ -596,8 +598,6 @@ function ensureTripleMarketPrices(){
 ensureTripleMarketPrices();
 // Desconto regional de 60% nos valores de jogadores que atuam em clubes latino-americanos.
 // Migração aplicada apenas uma vez a cada carreira salva.
-const LATIN_LEAGUES=new Set([0,1,2,3,4,5,6,7,8,9,15,16,17]);
-const latinPrice=(price,li)=>LATIN_LEAGUES.has(li)?Math.round(Number(price)*4)/10:Number(price);
 function applyLatinMarketDiscount(){
  if(state.marketPricesVersion>=4)return;
  countryLeagues.forEach((league,li)=>{

@@ -1,0 +1,7 @@
+POIFOOTB — Correção da tela vazia
+
+Causa encontrada: latinPrice era chamada antes de sua inicialização, interrompendo o JavaScript antes da tela inicial aparecer.
+
+Instalação: faça backup do repositório; envie todos os arquivos deste ZIP para a RAIZ do repositório GitHub, mantendo os nomes e pastas. Confirme substituição, clique Commit changes e atualize com Ctrl+Shift+R.
+
+O arquivo index.html usa versão nova dos assets para evitar cache antigo. Nenhum salvamento do navegador é apagado por esta correção.
