@@ -1,8 +1,5 @@
-POIFOOTB — Notas por partida e Melhor Jogador do Mundo
+POIFOOTB: Seleção da Temporada + Defesas de Goleiro + Roubadas de Bola
 
-Atualize index.html, script.js e style.css no GitHub.
-As notas de 3,0 a 10,0 são simuladas para 11 jogadores por clube em partidas processadas por recordGoals.
-Estatísticas > Notas: média da temporada e notas da última partida simulada.
-Melhor jogador do mundo considera nota média, quantidade de jogos, gols e assistências.
-Resultados antigos não terão notas retroativas.
-Faça backup do seu jogo antes de substituir arquivos.
+Substitua os arquivos no GitHub e faça backup antes.
+As estatísticas novas são geradas nas próximas partidas simuladas.
+A Seleção da Temporada utiliza os registros das últimas 25 partidas guardadas pelo jogo; portanto, ainda não representa uma temporada completa quando há mais de 25 jogos.

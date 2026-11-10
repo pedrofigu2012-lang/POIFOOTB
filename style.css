@@ -110,3 +110,24 @@ main{max-width:1700px;padding:22px 22px}.heading{margin-bottom:15px}.eyebrow{col
 @media(max-width:600px){.national-callup-grid{grid-template-columns:1fr}.national-callup-item{padding:12px}}
 
 .sub-panel{margin:16px 0;padding:16px;border:1px solid #557a61;border-radius:12px;background:#193324}.sub-panel select{max-width:100%;padding:9px;margin:5px;background:#10291c;color:#fff;border:1px solid #557a61;border-radius:8px}
+
+/* POIFOOTB 2026 — interface do clube */
+:root{--club-primary:#2fc58e;--club-secondary:#102a25;--club-on-primary:#fff;--club-accent:#2fc58e}
+body{background:radial-gradient(ellipse at 15% -10%,color-mix(in srgb,var(--club-primary) 14%,#0c1218),transparent 60%),#0c1118;color:#eef3f6}
+header{background:linear-gradient(110deg,var(--club-secondary),#131b26 75%);border-bottom:3px solid var(--club-primary);box-shadow:0 4px 30px #0004}
+aside{background:linear-gradient(175deg,color-mix(in srgb,var(--club-secondary) 65%,#111c27),#101722);border-right:1px solid color-mix(in srgb,var(--club-primary) 40%,#354354)}
+.club{background:linear-gradient(140deg,var(--club-secondary),#1b2531);border:1px solid var(--club-primary);box-shadow:0 14px 30px #0003}
+.shield{background:var(--club-primary);color:var(--club-on-primary);border-color:var(--club-secondary)}
+.logo small,.eyebrow,.rating{color:var(--club-accent)}
+nav{gap:4px}nav button{padding:12px 14px;border-radius:11px;transition:background .15s,transform .15s}
+nav button:hover{background:color-mix(in srgb,var(--club-primary) 18%,#1a2430);transform:translateX(2px)}
+nav button.active,nav button.poi-current{background:linear-gradient(95deg,color-mix(in srgb,var(--club-primary) 32%,#17212c),#17212c);color:#fff;border-color:var(--club-primary);box-shadow:inset 4px 0 var(--club-primary)}
+.primary{background:var(--club-primary);color:var(--club-on-primary)}.primary:hover{filter:brightness(1.12);background:var(--club-primary)}
+.secondary{background:color-mix(in srgb,var(--club-secondary) 65%,#293445);color:#fff;border-color:color-mix(in srgb,var(--club-primary) 35%,#4b5360)}
+.panel,.stat{background:#17212e;border:1px solid #304052;border-radius:16px;box-shadow:0 8px 26px #0002}
+.hero{background:radial-gradient(circle at 88% 30%,color-mix(in srgb,var(--club-primary) 42%,#263244),#192536 65%);border-color:var(--club-primary)}
+.pill{border-color:var(--club-primary);background:#1a2633;color:#fff}
+.manager-topnav{border-bottom:1px solid color-mix(in srgb,var(--club-primary) 40%,#39485c)}
+.manager-topnav button:hover{color:var(--club-accent)}
+.poi-schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.poi-fixture{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #334456}.poi-fixture>div{flex:1;min-width:0}.poi-fixture strong{display:block;font-size:12px}.poi-fixture small{display:block;color:#a9b8c8;margin-top:4px}.poi-fixture-date{font-size:11px;color:#b5c7d8;min-width:94px}.poi-fixture button{padding:8px 10px;font-size:11px}
+@media(max-width:800px){.poi-schedule-grid{grid-template-columns:1fr}.poi-fixture-date{min-width:75px}.poi-fixture{gap:7px}}

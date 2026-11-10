@@ -78,7 +78,7 @@ const italianPositions=["GOL","GOL","LD","ZAG","ZAG","ZAG","LE","LE","VOL","MC",
 
 const countryLeagues = [
  {name:'Brasil',flag:'🇧🇷',clubs:teams.map(t=>t[0])},
- {name:'Argentina',flag:'🇦🇷',clubs:['River Plate','Boca Juniors','Racing Club','Independiente','San Lorenzo','Estudiantes','Vélez Sarsfield','Lanús','Rosario Central','Newell’s Old Boys','Talleres','Belgrano']},
+ {name:'Argentina',flag:'🇦🇷',clubs:["River Plate", "Boca Juniors", "Racing Club", "Independiente", "San Lorenzo", "Estudiantes", "Vélez Sarsfield", "Lanús", "Rosario Central", "Newell’s Old Boys", "Talleres", "Belgrano", "Argentinos Juniors", "Banfield", "Barracas Central", "Central Córdoba", "Defensa y Justicia", "Deportivo Riestra", "Gimnasia La Plata", "Huracán", "Independiente Rivadavia", "Instituto", "Platense", "Sarmiento", "Tigre", "Unión de Santa Fe", "Atlético Tucumán", "Aldosivi", "Gimnasia de Mendoza", "Estudiantes de Río Cuarto"]},
  {name:'Uruguai',flag:'🇺🇾',clubs:['Peñarol','Nacional','Defensor Sporting','Danubio','Liverpool (URU)','Montevideo City Torque','Wanderers','Cerro Largo','Boston River','River Plate (URU)']},
  {name:'Chile',flag:'🇨🇱',clubs:['Colo-Colo','Universidad de Chile','Universidad Católica','Palestino','Huachipato','Cobresal','Everton (CHI)','Unión Española','Coquimbo Unido','O’Higgins']},
  {name:'Colômbia',flag:'🇨🇴',clubs:['Atlético Nacional','Millonarios','América de Cali','Junior','Independiente Medellín','Deportes Tolima','Santa Fe','Once Caldas','Deportivo Cali','Águilas Doradas']},
@@ -157,7 +157,7 @@ function countryOfTeam(id){return Math.floor(id/1000)}
 function clubUid(li,i){return li*1000+i}
 function getClubByUid(uid){return leaguePools[Math.floor(uid/1000)]?.[uid%1000]}
 function makeLeagueTable(li){return leaguePools[li].map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}))}
-function circleSchedule(n){let arr=Array.from({length:n},(_,i)=>i);if(n%2){arr.push(-1);n++}const out=[];for(let r=0;r<n-1;r++){let matches=[];for(let j=0;j<n/2;j++){const a=arr[j],b=arr[n-1-j];if(a>=0&&b>=0)matches.push([a,b])}out.push(matches);arr=[arr[0],arr[n-1],...arr.slice(1,n-1)]}return out}
+function circleSchedule(n){let arr=Array.from({length:n},(_,i)=>i);if(n%2){arr.push(-1);n++}const out=[];for(let r=0;r<n-1;r++){let matches=[];for(let j=0;j<n/2;j++){const a=arr[j],b=arr[n-1-j];if(a>=0&&b>=0)matches.push([a,b])}out.push(matches);arr=[arr[0],arr[n-1],...arr.slice(1,n-1)]}return out.concat(out.map(round=>round.map(([a,b])=>[b,a])))}
 // Avaliações estimadas no estilo EA SPORTS FC 27 — NÃO são notas oficiais da EA.
 // Nomes selecionados têm valores individualizados; demais atletas usam ajuste moderado por liga.
 const FC27_ESTIMATES = Object.fromEntries([
@@ -181,7 +181,7 @@ function applyFC27EstimatedRatings(){
   for(const roster of clubs){if(!Array.isArray(roster))continue;
    for(const p of roster){const next=fc27Estimate(p,li);if(next===null)continue;
     p.ovr=next;p.fc27Estimated=true;
-    if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((next-65)*1.1*10)/10);
+    if(!Number.isFinite(p.transfermarktEUR))p.value=latinPrice(3*Math.max(1,Math.round((next-65)*1.1*10)/10),li);
     changed++;
    }
   }
@@ -206,7 +206,7 @@ function calibrateBrazilDivisionStrength(){
     const i=tries%roster.length,step=total<goal?1:-1;
     if(desired[i]+step>=40&&desired[i]+step<=99){desired[i]+=step;total+=step;}
    }
-   roster.forEach((p,i)=>{p.ovr=desired[i];if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10)});
+   roster.forEach((p,i)=>{p.ovr=desired[i];if(!Number.isFinite(p.transfermarktEUR))p.value=latinPrice(3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10),0)});
    if(leaguePools[li]?.[ci])leaguePools[li][ci].ovr=target;
   });
  }
@@ -264,6 +264,9 @@ function ensureExpansion(){
  if(!state.country && state.country!==0)state.country=0;
  if(!state.countryTables)state.countryTables=countryLeagues.map((_,li)=>makeLeagueTable(li));
  while(state.countryTables.length<countryLeagues.length)state.countryTables.push(makeLeagueTable(state.countryTables.length));
+ // Completa a classificação argentina de carreiras antigas sem apagar partidas já simuladas.
+ if(Array.isArray(state.countryTables[1])){const seen=new Set(state.countryTables[1].map(t=>t.id));for(let ci=0;ci<countryLeagues[1].clubs.length;ci++)if(!seen.has(ci))state.countryTables[1].push({id:ci,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0});}
+
  if(!state.countryRounds)state.countryRounds=countryLeagues.map(()=>0);
  while(state.countryRounds.length<countryLeagues.length)state.countryRounds.push(0);
  if(!state.foreignPlayers)state.foreignPlayers=leaguePools.map((league,li)=>li===0?null:league.map(t=>t.players.map(p=>({...p}))));
@@ -329,16 +332,20 @@ function recordMatchRatings(comp,a,b,x,y,before){
   const roster=playerForEvent(uid).slice().sort((p,q)=>(q.ovr||65)-(p.ovr||65)).slice(0,11);
   for(const p of roster){const key=uid+'|'+String(p.id??p.name),now=state.scorers.competitions[comp]?.[key];const g=(now?.goals||0)-(before[key]?.goals||0),as=(now?.assists||0)-(before[key]?.assists||0);
    const base=6.1+((p.ovr||70)-70)*.018+(forGoals>against?.28:forGoals===against?.05:-.22)+g*1.15+as*.65+(Math.random()-.5)*1.4;
-   const note=Math.round(Math.max(3,Math.min(10,base))*10)/10;
-   const row=state.matchRatings.players[key]||(state.matchRatings.players[key]={name:p.name,uid,matches:0,total:0,goals:0,assists:0});row.matches++;row.total+=note;row.goals+=g;row.assists+=as;
-   match.players.push({name:p.name,uid,note,goals:g,assists:as});
+   const pos=String(p.pos||'').toUpperCase();
+   const isGK=/GOL|GK/.test(pos),isDef=/ZAG|ZC|LD|LE|DEF|CB|RB|LB/.test(pos),isMid=/MEI|MC|VOL|MD|CAM|CM|CDM/.test(pos);
+   const saves=isGK?Math.max(0,Math.round((2+against*.65+Math.random()*4)*(.75+(p.ovr||70)/300))):0;
+   const tackles=isGK?0:Math.max(0,Math.round((isDef?3:isMid?2:1)+Math.random()*3-(against>forGoals?.3:0)));
+   const note=Math.round(Math.max(3,Math.min(10,base+saves*.045+tackles*.035))*10)/10;
+   const row=state.matchRatings.players[key]||(state.matchRatings.players[key]={name:p.name,uid,matches:0,total:0,goals:0,assists:0});row.matches++;row.total+=note;row.goals+=g;row.assists+=as;row.saves=(row.saves||0)+saves;row.tackles=(row.tackles||0)+tackles;
+   match.players.push({name:p.name,uid,note,goals:g,assists:as,saves,tackles});
   }
  }
  match.players.sort((a,b)=>b.note-a.note);state.matchRatings.recent.unshift(match);state.matchRatings.recent.length=Math.min(state.matchRatings.recent.length,25);
 }
 function ratingsPanel(){statsInit();const rows=Object.values(state.matchRatings.players).filter(p=>p.matches>0).sort((a,b)=>b.total/b.matches-a.total/a.matches).slice(0,25);
  const safe=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
- const last=state.matchRatings.recent[0];return `<section class="panel"><h3>⭐ Notas dos jogadores — ${state.year}</h3><p class="muted">Notas simuladas de 3,0 a 10,0 por partida. A média influencia o prêmio de Melhor Jogador do Mundo. Abaixo aparecem os 25 melhores por média.</p><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>CLUBE</th><th>JOGOS</th><th>MÉDIA</th><th>GOLS</th><th>ASSIST.</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${safe(p.name)}</td><td>${safe(getClubByUid(p.uid)?.name||'Clube')}</td><td>${p.matches}</td><td><b>${(p.total/p.matches).toFixed(1)}</b></td><td>${p.goals}</td><td>${p.assists}</td></tr>`).join('')||'<tr><td colspan="6">Simule uma partida para gerar notas.</td></tr>'}</tbody></table></div></section>${last?`<section class="panel"><h3>📋 Última partida: ${safe(last.teams.join(' × '))} (${last.score})</h3><p class="muted">${safe(last.competition)} • notas de todos os jogadores utilizados na simulação</p><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>NOTA</th><th>GOLS</th><th>ASSIST.</th></tr></thead><tbody>${last.players.map(p=>`<tr><td>${safe(p.name)}</td><td><b>${p.note.toFixed(1)}</b></td><td>${p.goals}</td><td>${p.assists}</td></tr>`).join('')}</tbody></table></div></section>`:''}`}
+ const last=state.matchRatings.recent[0];return `<section class="panel"><h3>⭐ Notas dos jogadores — ${state.year}</h3><p class="muted">Notas simuladas de 3,0 a 10,0 por partida. A média influencia o prêmio de Melhor Jogador do Mundo. Abaixo aparecem os 25 melhores por média.</p><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>CLUBE</th><th>JOGOS</th><th>MÉDIA</th><th>GOLS</th><th>ASSIST.</th><th>DEFESAS</th><th>ROUBADAS</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${safe(p.name)}</td><td>${safe(getClubByUid(p.uid)?.name||'Clube')}</td><td>${p.matches}</td><td><b>${(p.total/p.matches).toFixed(1)}</b></td><td>${p.goals}</td><td>${p.assists}</td><td>${p.saves||0}</td><td>${p.tackles||0}</td></tr>`).join('')||'<tr><td colspan="8">Simule uma partida para gerar notas.</td></tr>'}</tbody></table></div></section>${last?`<section class="panel"><h3>📋 Última partida: ${safe(last.teams.join(' × '))} (${last.score})</h3><p class="muted">${safe(last.competition)} • notas de todos os jogadores utilizados na simulação</p><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>NOTA</th><th>GOLS</th><th>ASSIST.</th><th>DEFESAS</th><th>ROUBADAS</th></tr></thead><tbody>${last.players.map(p=>`<tr><td>${safe(p.name)}</td><td><b>${p.note.toFixed(1)}</b></td><td>${p.goals}</td><td>${p.assists}</td><td>${p.saves||0}</td><td>${p.tackles||0}</td></tr>`).join('')}</tbody></table></div></section>`:''}`}
 function statsCompetitionNames(){return [...countryLeagues.map((l,i)=>({key:'league-'+i,name:l.flag+' '+l.name})),{key:'libertadores',name:'🏆 Libertadores'},{key:'sudamericana',name:'🏆 Sul-Americana'},...countryLeagues.map((l,i)=>({key:'cup-'+i,name:'🏆 Copa Nacional — '+l.name})),{key:'world',name:'🌍 Super Mundial'},{key:'intercontinental',name:'🌐 Mundial de Clubes'},{key:'champions',name:'⭐ Champions League'}]}
 function statsTable(comp,kind){statsInit();const arr=Object.values(state.scorers.competitions[comp]||{}).filter(x=>x[kind]>0).sort((a,b)=>b[kind]-a[kind]||(kind==='goals'?b.assists-a.assists:b.goals-a.goals)).slice(0,15);return `<div class="tablewrap"><table><thead><tr><th>#</th><th>JOGADOR</th><th>CLUBE</th><th>${kind==='goals'?'GOLS':'ASSIST.'}</th></tr></thead><tbody>${arr.map((x,i)=>`<tr><td>${i+1}</td><td>${x.name}</td><td>${getClubByUid(x.uid)?.name||'Clube'}</td><td><b>${x[kind]}</b></td></tr>`).join('')||'<tr><td colspan="4">Ainda não há estatísticas registradas nesta competição.</td></tr>'}</tbody></table></div>`}
 function statsWidget(comp){return `<section class="panel"><h3>⚽ Artilharia</h3>${statsTable(comp,'goals')}</section><section class="panel"><h3>🎯 Líderes em assistências</h3>${statsTable(comp,'assists')}</section>`}
@@ -346,21 +353,70 @@ function statsWidget(comp){return `<section class="panel"><h3>⚽ Artilharia</h3
 function individualAwards(){
  const rows=new Map();
  for(const stats of Object.values(state.scorers?.competitions||{}))for(const [key,r] of Object.entries(stats)){
-  const old=rows.get(key)||{name:r.name,uid:r.uid,goals:0,assists:0};
-  old.goals+=Number(r.goals)||0;old.assists+=Number(r.assists)||0;rows.set(key,old);
+  const old=rows.get(key)||{name:r.name,uid:r.uid,goals:0,assists:0};old.goals+=Number(r.goals)||0;old.assists+=Number(r.assists)||0;rows.set(key,old);
  }
- const players=[...rows.values()];
- const ratings=Object.entries(state.matchRatings?.players||{});for(const [key,r] of ratings){if(!rows.has(key))rows.set(key,{name:r.name,uid:r.uid,goals:0,assists:0});}const allPlayers=[...rows.entries()].map(([key,r])=>({...r,avg:state.matchRatings?.players?.[key]?.matches?state.matchRatings.players[key].total/state.matchRatings.players[key].matches:0,matches:state.matchRatings?.players?.[key]?.matches||0}));
- const top=(field,secondary)=>[...players].filter(r=>r[field]>0).sort((a,b)=>b[field]-a[field]||b[secondary]-a[secondary])[0]||null;
- const best=[...allPlayers].filter(r=>r.matches>0||r.goals+r.assists>0).sort((a,b)=>(b.avg*8+Math.min(b.matches,20)*.25+b.goals*1.5+b.assists)-(a.avg*8+Math.min(a.matches,20)*.25+a.goals*1.5+a.assists)||b.goals-a.goals)[0]||null;
- return {scorer:top('goals','assists'),assistant:top('assists','goals'),best};
+ for(const [key,r] of Object.entries(state.matchRatings?.players||{}))if(!rows.has(key))rows.set(key,{name:r.name,uid:r.uid,goals:0,assists:0});
+ const all=[...rows.entries()].map(([key,r])=>{
+  const rating=state.matchRatings?.players?.[key],matches=Number(rating?.matches)||0;
+  const roster=playerForEvent(r.uid)||[];const id=key.slice(String(r.uid).length+1);
+  const player=roster.find(p=>String(p.id??p.name)===id)||roster.find(p=>p.name===r.name);
+  const pos=String(player?.pos||'').toUpperCase();const avg=matches?rating.total/matches:0;
+  return {...r,matches,avg,pos,score:avg*8+Math.min(matches,20)*.25+r.goals*1.5+r.assists};
+ });
+ const top=(field,secondary)=>all.filter(r=>r[field]>0).sort((a,b)=>b[field]-a[field]||b[secondary]-a[secondary])[0]||null;
+ const ranked=all.filter(r=>r.matches>0||r.goals+r.assists>0).sort((a,b)=>b.score-a.score||b.goals-a.goals);
+ const category=regex=>ranked.find(r=>regex.test(r.pos)&&r.matches>=1)||null;
+ return {scorer:top('goals','assists'),assistant:top('assists','goals'),best:ranked[0]||null,
+ goalkeeper:category(/GOL|GK/),defender:category(/ZAG|ZC|LD|LE|DEF|CB|RB|LB/),
+ midfielder:category(/MEI|MC|VOL|MD|CAM|CM|CDM/),forward:category(/ATA|CA|PD|PE|ST|CF|RW|LW/),
+ revelation:ranked.filter(r=>r.matches>=5).sort((a,b)=>b.avg-a.avg)[0]||null};
 }
 function awardsPanel(awards=individualAwards(),year=state.year){
  const safe=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
- const line=(icon,label,r,metric)=>`<div class="row"><span>${icon} <b>${label}</b></span><span>${r?safe(r.name)+' — '+safe(getClubByUid(r.uid)?.name||'Clube')+' ('+metric(r)+')':'Ainda não definido'}</span></div>`;
- return `<section class="panel"><h3>🏅 Prêmios individuais — ${year}</h3><p class="muted">Prêmios fictícios calculados com os gols e assistências registrados nas competições simuladas. Melhor jogador do mundo: considera média das notas por partida, regularidade, gols e assistências.</p>${line('🥇','Artilheiro',awards.scorer,r=>r.goals+' gols')}${line('🎯','Maior assistente',awards.assistant,r=>r.assists+' assistências')}${line('⭐','Melhor jogador',awards.best,r=>(r.avg?r.avg.toFixed(1)+' de média, ':'')+r.goals+' gols, '+r.assists+' assistências')}</section>`;
+ const line=(icon,label,r,metric)=>`<div class="row" style="gap:12px;padding:11px 0;border-bottom:1px solid #ffffff20"><span>${icon} <b>${label}</b></span><span style="text-align:right">${r?safe(r.name)+' — '+safe(getClubByUid(r.uid)?.name||'Clube')+' ('+metric(r)+')':'Ainda não definido'}</span></div>`;
+ const avg=r=>r.matches?r.avg.toFixed(1)+' de média em '+r.matches+' jogos':'sem notas';
+ return `<section class="panel"><h3>🏅 Prêmios individuais — ${year}</h3><p class="muted">Prêmios fictícios calculados pelas partidas simuladas. Melhor do Mundo considera notas, regularidade, gols e assistências. Prêmios por posição dependem das posições identificadas.</p>
+ ${line('🌍','Melhor jogador do mundo',awards.best,r=>avg(r)+', '+r.goals+' gols')}
+ ${line('🥇','Artilheiro',awards.scorer,r=>r.goals+' gols')}
+ ${line('🎯','Rei das assistências',awards.assistant,r=>r.assists+' assistências')}
+ ${line('🧤','Melhor goleiro',awards.goalkeeper,avg)}
+ ${line('🛡️','Melhor defensor',awards.defender,avg)}
+ ${line('🎩','Melhor meio-campista',awards.midfielder,avg)}
+ ${line('⚡','Melhor atacante',awards.forward,avg)}
+ ${line('⭐','Melhor média de notas (mínimo 5 jogos)',awards.revelation,avg)}</section>`;
 }
-function renderStatistics(){const names=statsCompetitionNames();const selected=names.find(n=>n.key===state.statsComp)||names[0];return `<section class="panel"><h3>⚽ Artilharia e 🎯 assistências — ${state.year}</h3><p class="muted">Estatísticas fictícias das partidas simuladas nesta versão. Partidas de versões anteriores não possuem autores de gols registrados.</p><select id="statsSelect" style="width:100%;padding:12px;border-radius:8px;background:#17251b;color:white;border:1px solid #516453">${names.map(n=>`<option value="${n.key}" ${n.key===selected.key?'selected':''}>${n.name}</option>`).join('')}</select></section>${statsWidget(selected.key)}${ratingsPanel()}`} 
+
+// Seleção ideal por campeonato, usando somente partidas daquele campeonato.
+function teamOfSeason(comp){
+ statsInit();const records=new Map();
+ for(const match of state.matchRatings.recent||[]){if(match.competition!==comp)continue;
+  for(const p of match.players||[]){const key=p.uid+'|'+p.name;const row=records.get(key)||{...p,total:0,matches:0,goals:0,assists:0,saves:0,tackles:0};
+   row.total+=Number(p.note)||0;row.matches++;row.goals+=p.goals||0;row.assists+=p.assists||0;row.saves+=p.saves||0;row.tackles+=p.tackles||0;records.set(key,row)}
+ }
+ const pool=[...records.values()].map(p=>{
+  const roster=playerForEvent(p.uid),player=roster.find(x=>x.name===p.name);
+  const pos=String(player?.pos||'').toUpperCase();
+  const group=/GOL|GK/.test(pos)?'GOL':/ZAG|ZC|LD|LE|DEF|CB|RB|LB/.test(pos)?'DEF':/MEI|MC|VOL|MD|CAM|CM|CDM/.test(pos)?'MEI':'ATA';
+  return {...p,group,avg:p.total/p.matches,score:p.total/p.matches+Math.min(10,p.matches)*.04+p.goals*.08+p.assists*.06+p.saves*.018+p.tackles*.012};
+ }).sort((a,b)=>b.score-a.score);
+ const chosen=[],used=new Set();for(const [group,count] of [['GOL',1],['DEF',4],['MEI',3],['ATA',3]]){
+  for(const p of pool.filter(p=>p.group===group).slice(0,count)){const key=p.uid+'|'+p.name;if(!used.has(key)){chosen.push(p);used.add(key)}}
+ }
+ for(const p of pool){if(chosen.length>=11)break;const key=p.uid+'|'+p.name;if(!used.has(key)){chosen.push(p);used.add(key)}}
+ return chosen;
+}
+function seasonXIpanel(comp){
+ const xi=teamOfSeason(comp);const safe=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ return `<section class="panel"><h3>🏆 Seleção da temporada — ${safe(statsCompetitionNames().find(c=>c.key===comp)?.name||comp)}</h3><p class="muted">Formação 4-3-3. Seleção calculada a partir das notas registradas por competição; só considera as últimas 25 partidas armazenadas. As estatísticas de defesas e roubadas de bola são simuladas, não dados oficiais.</p><div class="tablewrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>CLUBE</th><th>NOTA</th><th>DEFESAS</th><th>ROUBADAS</th></tr></thead><tbody>${xi.map(p=>`<tr><td>${p.group}</td><td>${safe(p.name)}</td><td>${safe(getClubByUid(p.uid)?.name||'Clube')}</td><td>${p.avg.toFixed(1)}</td><td>${p.saves}</td><td>${p.tackles}</td></tr>`).join('')||'<tr><td colspan="6">Simule partidas desta competição para formar a seleção.</td></tr>'}</tbody></table></div></section>`;
+}
+function defensiveStatsPanel(comp){
+ const rows=teamOfSeason(comp);const all=(state.matchRatings.recent||[]).filter(m=>m.competition===comp).flatMap(m=>m.players||[]);
+ const totals=new Map();for(const p of all){const key=p.uid+'|'+p.name;const r=totals.get(key)||{...p,saves:0,tackles:0};r.saves+=p.saves||0;r.tackles+=p.tackles||0;totals.set(key,r)}
+ const safe=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const board=(key,title)=>`<section class="panel"><h3>${title}</h3><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>CLUBE</th><th>TOTAL</th></tr></thead><tbody>${[...totals.values()].filter(r=>r[key]>0).sort((a,b)=>b[key]-a[key]).slice(0,15).map(r=>`<tr><td>${safe(r.name)}</td><td>${safe(getClubByUid(r.uid)?.name||'Clube')}</td><td>${r[key]}</td></tr>`).join('')||'<tr><td colspan="3">Sem registros nesta competição.</td></tr>'}</tbody></table></div></section>`;
+ return board('saves','🧤 Defesas de goleiro')+board('tackles','🛡️ Roubadas de bola');
+}
+function renderStatistics(){const names=statsCompetitionNames();const selected=names.find(n=>n.key===state.statsComp)||names[0];return `<section class="panel"><h3>⚽ Artilharia e 🎯 assistências — ${state.year}</h3><p class="muted">Estatísticas fictícias das partidas simuladas nesta versão. Partidas de versões anteriores não possuem autores de gols registrados.</p><select id="statsSelect" style="width:100%;padding:12px;border-radius:8px;background:#17251b;color:white;border:1px solid #516453">${names.map(n=>`<option value="${n.key}" ${n.key===selected.key?'selected':''}>${n.name}</option>`).join('')}</select></section>${statsWidget(selected.key)}${defensiveStatsPanel(selected.key)}${seasonXIpanel(selected.key)}${awardsPanel()}${ratingsPanel()}`} 
 
 // Cada clube tem fases diferentes a cada temporada: elencos fortes continuam favoritos,
 // mas o desempenho oscila e permite mais campeoes ao longo de carreiras longas.
@@ -454,17 +510,33 @@ function simulateLibertadores(){const c=state.continental;if(c.champion!==null)r
  for(let gi=0;gi<8;gi++){for(let [a,b] of fixtures){let u=c.groups[gi][a],v=c.groups[gi][b],[x,y]=cupPairScores(u,v);let A=c.groupTables[gi][a],B=c.groupTables[gi][b];A.p++;B.p++;A.gf+=x;A.ga+=y;B.gf+=y;B.ga+=x;if(x>y)A.pts+=3;else if(y>x)B.pts+=3;else{A.pts++;B.pts++}c.results.push({round:'Grupos '+(c.round+1),a:u,b:v,x,y})}}c.round++;
  if(c.round===6){const qualifiers=c.groupTables.flatMap(t=>[...t].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)).slice(0,2).map(x=>x.uid));c.knockout=qualifiers;}
  }else{
- let winners=[];for(let i=0;i<c.knockout.length;i+=2){const a=c.knockout[i],b=c.knockout[i+1];let [x,y]=cupPairScores(a,b);if(x===y){if(Math.random()<.5)x++;else y++}winners.push(x>y?a:b);c.results.push({round:['Oitavas','Quartas','Semifinal','Final'][c.round-6],a,b,x,y})}c.knockout=winners;c.round++;if(winners.length===1){c.champion=winners[0];state.continentalHistory.push({year:state.year,champion:c.champion});state.budget+=c.champion===clubUid(state.careerCountry,state.careerClub)?35:0;}}
+ const isFinal=c.knockout.length===2,secondLeg=!isFinal&&!!c.firstLeg;
+ const winners=[],firstLeg=[];
+ const stage=['Oitavas','Quartas','Semifinal','Final'][Math.min(3,Math.floor(Math.log2(16/c.knockout.length)))];
+ for(let i=0;i<c.knockout.length;i+=2){
+  const a=c.knockout[i],b=c.knockout[i+1];if(b===undefined){winners.push(a);continue;}
+  const home=secondLeg?b:a,away=secondLeg?a:b;
+  let [x,y]=cupPairScores(home,away),winner=null;
+  if(isFinal){winner=x===y?(Math.random()<.5?a:b):(x>y?a:b);}
+  else if(secondLeg){const old=c.firstLeg.find(r=>r.a===a&&r.b===b);const ga=old.x+y,gb=old.y+x;winner=ga===gb?(Math.random()<.5?a:b):(ga>gb?a:b);}
+  else firstLeg.push({a,b,x,y});
+  c.results.push({round:stage+(isFinal?'':secondLeg?' • Volta':' • Ida'),a:home,b:away,x,y,winner});
+  recordGoals('libertadores',home,away,x,y);
+  if(winner!==null)winners.push(winner);
+ }
+ if(!isFinal&&!secondLeg)c.firstLeg=firstLeg;
+ else{c.firstLeg=null;c.knockout=winners;c.round++;if(winners.length===1){c.champion=winners[0];state.continentalHistory.push({year:state.year,champion:c.champion});state.budget+=c.champion===clubUid(state.careerCountry,state.careerClub)?35:0;}}
+ }
  save();render();alertMsg(c.champion!==null?'🏆 Campeão: '+getClubByUid(c.champion).name:'Libertadores: etapa avançada!');
 }
 function renderSouth(){let li=state.country;let league=countryLeagues[li],rank=li===0?tableSorted():leagueRank(state.countryTables[li]);let max=circleSchedule(league.clubs.length).length;return `<section class="panel"><h3>🌍 Ligas nacionais e divisões brasileiras</h3><p class="muted">Explore ligas sul-americanas, europeias e as Séries A, B, C e D do Brasil. Clubes são representativos, e resultados são fictícios. Formatos simplificados.</p><div class="leaguechips">${countryLeagues.map((l,i)=>`<button class="chip ${i===li?'selected':''}" data-country="${i}">${l.flag} ${l.name}</button>`).join('')}</div><div class="row"><b>${league.flag} ${league.name}</b><span>Rodada ${li===0?state.round:state.countryRounds[li]}/${max}</span></div>${li!==0?`<button class="primary" id="simcountry" ${state.countryRounds[li]>=max||li===careerLeague()?'disabled':''}>▶ Simular rodada da liga</button>`:'<p class="muted">A Série A brasileira avança pela Central do Treinador.</p>'}<div class="tablewrap"><table><thead><tr><th>#</th><th>CLUBE</th><th>PTS</th><th>J</th><th>V</th><th>SG</th></tr></thead><tbody>${rank.map((t,i)=>`<tr><td>${i+1}</td><td><button class="club-link" data-viewclub="${li}:${t.id}">${league.clubs[t.id]}</button></td><td><b>${t.pts}</b></td><td>${t.p}</td><td>${t.w}</td><td>${t.gf-t.ga}</td><td><small>${qualificationZone(careerLeague(),i+1,careerRank().length)[0]}</small></td></tr>`).join('')}</tbody></table></div></section>`}
 function renderClubRoster(){const [li,ci]=(state.viewClub||'0:0').split(':').map(Number);const team=leaguePools[li][ci];const roster=li===0?state.players[ci]:state.foreignPlayers[li][ci];return `<section class="panel"><button class="secondary" id="backclubs">← Voltar às ligas</button><h3>${team.name} — ${countryLeagues[li].flag} ${countryLeagues[li].name}</h3><p class="muted">18 vagas por equipe. Nomes identificados são referências históricas/recentes, sem vínculo confirmado em novembro de 2026. “Atleta a confirmar” não representa jogador real cadastrado.</p><div class="tablewrap"><table><thead><tr><th>#</th><th>JOGADOR</th><th>POSIÇÃO</th><th>GER</th><th>VALOR</th></tr></thead><tbody>${roster.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.pos}</td><td class="rating">${p.ovr}</td><td title="${marketValueInfo(p)}">${fmt(p.value)}${Number.isFinite(p.transfermarktEUR)?' ✓':' *'}</td></tr>`).join('')}</tbody></table></div></section>`}
-function renderLibertadores(){const c=state.continental;const stage=c.champion!==null?'Finalizada':c.round<6?'Fase de grupos • Rodada '+(c.round+1)+'/6':['Oitavas','Quartas','Semifinal','Final'][c.round-6];return `<section class="hero"><div><span class="eyebrow">COPA LIBERTADORES DA AMÉRICA</span><h2>🏆 Libertadores ${c.year}</h2><p>${stage}</p><button class="primary" id="simlib" ${c.champion!==null?'disabled':''}>▶ ${c.champion!==null?'COMPETIÇÃO ENCERRADA':'SIMULAR PRÓXIMA ETAPA'}</button></div><div class="ball">🏆</div></section><section class="panel"><h3>${c.champion!==null?'🏆 Campeão: '+getClubByUid(c.champion).name:'Fase de grupos'}</h3><p class="muted">32 clubes • 8 grupos de 4 • 6 rodadas e mata-mata em jogo único. Participantes simulados; não é o sorteio oficial da CONMEBOL.</p><div class="groupgrid">${c.groupTables.map((group,gi)=>`<div class="groupcard"><h4>GRUPO ${'ABCDEFGH'[gi]}</h4>${[...group].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)).map(t=>`<div class="groupteam"><span>${getClubByUid(t.uid).name}</span><b>${t.pts}</b></div>`).join('')}</div>`).join('')}</div></section><section class="panel"><h3>Últimos jogos</h3>${c.results.slice(-16).reverse().map(r=>`<div class="row"><span>${getClubByUid(r.a).name} × ${getClubByUid(r.b).name}</span><b>${r.x} - ${r.y}</b></div>`).join('')||'<p class="muted">A competição ainda não começou.</p>'}</section>${bracketHTML(c,false,true)}`}
+function renderLibertadores(){const c=state.continental;const stage=c.champion!==null?'Finalizada':c.round<6?'Fase de grupos • Rodada '+(c.round+1)+'/6':['Oitavas','Quartas','Semifinal','Final'][c.round-6];return `<section class="hero"><div><span class="eyebrow">COPA LIBERTADORES DA AMÉRICA</span><h2>🏆 Libertadores ${c.year}</h2><p>${stage}</p><button class="primary" id="simlib" ${c.champion!==null?'disabled':''}>▶ ${c.champion!==null?'COMPETIÇÃO ENCERRADA':'SIMULAR PRÓXIMA ETAPA'}</button></div><div class="ball">🏆</div></section><section class="panel"><h3>${c.champion!==null?'🏆 Campeão: '+getClubByUid(c.champion).name:'Fase de grupos'}</h3><p class="muted">32 clubes • 8 grupos de 4 • 6 rodadas e mata-mata em ida e volta, com final única. Participantes simulados; não é o sorteio oficial da CONMEBOL.</p><div class="groupgrid">${c.groupTables.map((group,gi)=>`<div class="groupcard"><h4>GRUPO ${'ABCDEFGH'[gi]}</h4>${[...group].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)).map(t=>`<div class="groupteam"><span>${getClubByUid(t.uid).name}</span><b>${t.pts}</b></div>`).join('')}</div>`).join('')}</div></section><section class="panel"><h3>Últimos jogos</h3>${c.results.slice(-16).reverse().map(r=>`<div class="row"><span>${getClubByUid(r.a).name} × ${getClubByUid(r.b).name}</span><b>${r.x} - ${r.y}</b></div>`).join('')||'<p class="muted">A competição ainda não começou.</p>'}</section>${bracketHTML(c,false,true)}`}
 
 function renderSudamericana(){
  const c=state.sudamericana;
  const stage=c.champion!==null?'Finalizada':c.round<6?'Fase de grupos • Rodada '+(c.round+1)+'/6':['Oitavas','Quartas','Semifinal','Final'][c.round-6];
- return `<section class="hero"><div><span class="eyebrow">COPA SUL-AMERICANA</span><h2>🏆 Sul-Americana ${c.year}</h2><p>${stage}</p><button class="primary" id="simsud" ${c.champion!==null?'disabled':''}>▶ ${c.champion!==null?'COMPETIÇÃO ENCERRADA':'SIMULAR PRÓXIMA ETAPA'}</button></div><div class="ball">🌎</div></section><section class="panel"><h3>${c.champion!==null?'🏆 Campeão: '+getClubByUid(c.champion).name:'Fase de grupos'}</h3><p class="muted">Simulação simplificada: 32 clubes, oito grupos, mata-mata em jogo único. Não reproduz o regulamento oficial da CONMEBOL.</p><div class="groupgrid">${c.groupTables.map((group,gi)=>`<div class="groupcard"><h4>GRUPO ${'ABCDEFGH'[gi]}</h4>${[...group].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)).map(t=>`<div class="groupteam"><span>${getClubByUid(t.uid).name}</span><b>${t.pts}</b></div>`).join('')}</div>`).join('')}</div></section><section class="panel"><h3>Últimos jogos</h3>${c.results.slice(-16).reverse().map(r=>`<div class="row"><span>${getClubByUid(r.a).name} × ${getClubByUid(r.b).name}</span><b>${r.x} - ${r.y}</b></div>`).join('')||'<p class="muted">A competição ainda não começou.</p>'}</section>${bracketHTML(c,false,true)}`;
+ return `<section class="hero"><div><span class="eyebrow">COPA SUL-AMERICANA</span><h2>🏆 Sul-Americana ${c.year}</h2><p>${stage}</p><button class="primary" id="simsud" ${c.champion!==null?'disabled':''}>▶ ${c.champion!==null?'COMPETIÇÃO ENCERRADA':'SIMULAR PRÓXIMA ETAPA'}</button></div><div class="ball">🌎</div></section><section class="panel"><h3>${c.champion!==null?'🏆 Campeão: '+getClubByUid(c.champion).name:'Fase de grupos'}</h3><p class="muted">Simulação simplificada: 32 clubes, oito grupos, mata-mata em ida e volta, com final única. Não reproduz o regulamento oficial da CONMEBOL.</p><div class="groupgrid">${c.groupTables.map((group,gi)=>`<div class="groupcard"><h4>GRUPO ${'ABCDEFGH'[gi]}</h4>${[...group].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)).map(t=>`<div class="groupteam"><span>${getClubByUid(t.uid).name}</span><b>${t.pts}</b></div>`).join('')}</div>`).join('')}</div></section><section class="panel"><h3>Últimos jogos</h3>${c.results.slice(-16).reverse().map(r=>`<div class="row"><span>${getClubByUid(r.a).name} × ${getClubByUid(r.b).name}</span><b>${r.x} - ${r.y}</b></div>`).join('')||'<p class="muted">A competição ainda não começou.</p>'}</section>${bracketHTML(c,false,true)}`;
 }
 const SINGLE_KEY='poifootb_carreira_v1';
 const MULTI_KEY='poifootb_multiplayer_local_v1';
@@ -489,7 +561,7 @@ const TM_EUR_TO_GAME_BRL=6; // taxa de conversão de referência do jogo, não c
 function allPlayerRosters(){return [...(state.players||[]),...(state.foreignPlayers||[]).filter(Array.isArray).flat()].filter(Array.isArray)}
 function marketValueInfo(p){
  if(p.placeholder)return 'Sem valor real (vaga provisória)';
- if(Number.isFinite(p.transfermarktEUR))return 'Transfermarkt de referência (preço do jogo 3×): € '+(p.transfermarktEUR/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi'+(p.transfermarktDate?' • '+p.transfermarktDate:'');
+ if(Number.isFinite(p.transfermarktEUR))return 'Transfermarkt de referência (preço do jogo ajustado por região): € '+(p.transfermarktEUR/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi'+(p.transfermarktDate?' • '+p.transfermarktDate:'');
  return 'Estimativa do jogo (não verificada no Transfermarkt)';
 }
 // Amostra de valores de mercado publicados em páginas do Transfermarkt, consultadas em 06/11/2026.
@@ -509,7 +581,7 @@ function applyVerifiedMarketValues(){
    if(!key)continue;
    p.transfermarktEUR=entry.names[key];p.transfermarktDate='consulta 2026-11-06';
    p.transfermarktSource='https://www.transfermarkt.com/';
-   p.value=3*Math.round(p.transfermarktEUR/1e6*TM_EUR_TO_GAME_BRL*10)/10;
+   p.value=latinPrice(3*Math.round(p.transfermarktEUR/1e6*TM_EUR_TO_GAME_BRL*10)/10,li);
   }
  }
 }
@@ -522,6 +594,23 @@ function ensureTripleMarketPrices(){
  localStorage.setItem(activeKey(),JSON.stringify(state));
 }
 ensureTripleMarketPrices();
+// Desconto regional de 60% nos valores de jogadores que atuam em clubes latino-americanos.
+// Migração aplicada apenas uma vez a cada carreira salva.
+const LATIN_LEAGUES=new Set([0,1,2,3,4,5,6,7,8,9,15,16,17]);
+const latinPrice=(price,li)=>LATIN_LEAGUES.has(li)?Math.round(Number(price)*4)/10:Number(price);
+function applyLatinMarketDiscount(){
+ if(state.marketPricesVersion>=4)return;
+ countryLeagues.forEach((league,li)=>{
+  if(!LATIN_LEAGUES.has(li))return;
+  const clubs=li===0?state.players:state.foreignPlayers?.[li];
+  if(!Array.isArray(clubs))return;
+  for(const roster of clubs)if(Array.isArray(roster))for(const p of roster)
+   if(Number.isFinite(p.value))p.value=Math.round(p.value*4)/10;
+ });
+ state.marketPricesVersion=4;
+ localStorage.setItem(activeKey(),JSON.stringify(state));
+}
+applyLatinMarketDiscount();
 function importMarketValues(){
  const field=$('tm-import'),status=$('tm-import-status');if(!field)return;
  let rows;try{rows=JSON.parse(field.value)}catch(e){status.textContent='JSON inválido. Confira vírgulas e aspas.';return}
@@ -537,7 +626,7 @@ function importMarketValues(){
   const roster=rosterByClub.get(key);
   const matches=(roster||[]).filter(p=>!p.placeholder&&p.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()===row.jogador.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
   if(matches.length!==1){ambiguous++;continue}
-  const player=matches[0];player.transfermarktEUR=row.valorEUR;player.transfermarktDate=row.data;player.value=3*Math.round(row.valorEUR/1e6*TM_EUR_TO_GAME_BRL*10)/10;changed++;
+  const player=matches[0];player.transfermarktEUR=row.valorEUR;player.transfermarktDate=row.data;player.value=latinPrice(3*Math.round(row.valorEUR/1e6*TM_EUR_TO_GAME_BRL*10)/10,countryLeagues.findIndex(l=>l.name===row.liga));changed++;
  }
  save();status.textContent=`${changed} valores importados • ${ambiguous} nomes não encontrados/ambíguos • ${invalid} entradas inválidas.`;render();
  const after=$('tm-import-status');if(after)after.textContent=`${changed} valores importados • ${ambiguous} não encontrados/ambíguos • ${invalid} inválidos.`;
@@ -583,15 +672,15 @@ function bindMultiplayer(){if($('newmulti'))$('newmulti').onclick=createMultipla
 function synchronizedRoundGuard(){if(!multiplayer)return true;if(currentProfile().ready){alertMsg('Você já encerrou sua vez.');return false}if(currentProfile().playedCycle===multiplayer.cycle){alertMsg('Você já disputou sua rodada neste turno. Passe a vez.');return false}const key=careerLeague()+':'+careerRound();if(multiplayer.roundDone[key]){alertMsg('Esta rodada já foi simulada por outro treinador da mesma liga. Encerre sua vez para continuar.');return false}return true}
 function markSynchronizedRound(li,round){if(multiplayer){multiplayer.roundDone[li+':'+round]=true;currentProfile().playedCycle=multiplayer.cycle;save();const active=multiplayer.active,cycle=multiplayer.cycle;setTimeout(()=>{if(multiplayer&&multiplayer.active===active&&multiplayer.cycle===cycle&&!liveMatch&&!currentProfile().ready){finishTurn();alertMsg('🔄 Vez passada automaticamente!')}},750)}}
 function tableSorted(){return [...state.standings].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf)}
-function fixtures(){let arr=teams.map((_,i)=>i),rounds=[];for(let r=0;r<19;r++){let pairs=[];for(let j=0;j<10;j++)pairs.push([arr[j],arr[19-j]]);rounds.push(pairs);arr=[arr[0],arr[19],...arr.slice(1,19)];}return rounds}
+function fixtures(){let arr=teams.map((_,i)=>i),rounds=[];for(let r=0;r<19;r++){let pairs=[];for(let j=0;j<10;j++)pairs.push([arr[j],arr[19-j]]);rounds.push(pairs);arr=[arr[0],arr[19],...arr.slice(1,19)];}return rounds.concat(rounds.map(r=>r.map(([a,b])=>[b,a])))}
 const schedule=fixtures();
 function opponent(){return schedule[state.round]?.find(p=>p.includes(state.club))?.find(id=>id!==state.club)}
 function strength(i){const arr=[...state.players[i]].sort((a,b)=>b.ovr-a.ovr).slice(0,11);return arr.reduce((s,p)=>s+p.ovr,0)/arr.length}
 function goals(i,j){return scorePower(strength(i),strength(j),clubUid(0,i),clubUid(0,j))}
 function updateTable(a,b,x,y){const A=state.standings[a],B=state.standings[b];A.p++;B.p++;A.gf+=x;A.ga+=y;B.gf+=y;B.ga+=x;if(x>y){A.w++;B.l++;A.pts+=3}else if(x<y){B.w++;A.l++;B.pts+=3}else{A.d++;B.d++;A.pts++;B.pts++}}
-function play(){if(state.club===null)return;if(state.round>=19)return;const pairs=schedule[state.round];let summary;for(const [a,b] of pairs){let x=goals(a,b),y=goals(b,a);if(state.liveResult&&state.liveResult.li===0&&state.liveResult.round===state.round&&(a===state.club||b===state.club)){const home=a===state.club;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateTable(a,b,x,y);recordGoals("league-0",clubUid(0,a),clubUid(0,b),x,y);if(a===state.club||b===state.club){const mine=a===state.club,own=mine?x:y,other=mine?y:x,opp=mine?b:a;summary={round:state.round+1,opponent:teams[opp][0],own,other,year:state.year};state.budget+=own>other?2:own===other?0.8:0.25;}}state.results.push(summary);state.round++;payMonthlyWages();if(summary)satisfactionAfterMatch(summary.own,summary.other);save();render();alertMsg('Rodada '+state.round+': '+summary.own+' x '+summary.other)}
-function nextSeason(){if(state.round<19)return;const ranking=tableSorted(),pos=ranking.findIndex(t=>t.id===state.club)+1;state.history.push({year:state.year,position:pos,points:state.standings[state.club].pts});state.budget+=Math.max(5,40-pos*1.5);state.year++;state.dayOfYear=1;state.transferOffers={inbox:[],history:transferOffersInit().history,lastChecked:null,seq:transferOffersInit().seq};const retired=processRetirements();developYouth();const contractResult=expireContracts();state.nationalWorldCup=null;state.scorers={year:state.year,competitions:{}};state.round=0;state.countryTables=countryLeagues.map((_,li)=>makeLeagueTable(li));state.countryRounds=countryLeagues.map(()=>0);state.results=[];state.standings=teams.map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}));for(const team of state.players)for(const p of team){if(Math.random()<.4)p.ovr=Math.max(65,Math.min(93,p.ovr+(Math.random()<.65?1:-1)));if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10)}newLibertadores();newSudamericana();initExtraCups();if(fired){state.page='jobs';jobInit().offers=[];jobOffers(true)}save();render();alertMsg(fired?'Você foi demitido! Confira as propostas em Empregos.':'Bem-vindo à temporada '+state.year+'!')}
-function transfer(from,index,to){if(from===to)return;const p=state.players[from][index];if(!p)return;const cost=p.value;if(to===state.club&&state.budget<cost){alertMsg('Saldo insuficiente!');return}if(from===state.club){if(state.players[from].length<=4){alertMsg('Mantenha pelo menos quatro jogadores!');return}state.budget+=cost}else if(to===state.club)state.budget-=cost;state.players[from].splice(index,1);state.players[to].push(p);save();render();alertMsg(p.name+(to===state.club?' contratado!':' vendido!'))}
+function play(){if(state.club===null)return;if(state.round>=schedule.length)return;const pairs=schedule[state.round];let summary;for(const [a,b] of pairs){let x=goals(a,b),y=goals(b,a);if(state.liveResult&&state.liveResult.li===0&&state.liveResult.round===state.round&&(a===state.club||b===state.club)){const home=a===state.club;x=home?state.liveResult.own:state.liveResult.away;y=home?state.liveResult.away:state.liveResult.own}updateTable(a,b,x,y);recordGoals("league-0",clubUid(0,a),clubUid(0,b),x,y);if(a===state.club||b===state.club){const mine=a===state.club,own=mine?x:y,other=mine?y:x,opp=mine?b:a;summary={round:state.round+1,opponent:teams[opp][0],own,other,year:state.year};state.budget+=own>other?2:own===other?0.8:0.25;}}state.results.push(summary);state.round++;payMonthlyWages();if(summary)satisfactionAfterMatch(summary.own,summary.other);save();render();alertMsg('Rodada '+state.round+': '+summary.own+' x '+summary.other)}
+function nextSeason(){if(state.round<schedule.length)return;const ranking=tableSorted(),pos=ranking.findIndex(t=>t.id===state.club)+1;state.history.push({year:state.year,position:pos,points:state.standings[state.club].pts});state.budget+=Math.max(5,40-pos*1.5);state.year++;state.dayOfYear=1;state.transferOffers={inbox:[],history:transferOffersInit().history,lastChecked:null,seq:transferOffersInit().seq};const retired=processRetirements();developYouth();const contractResult=expireContracts();state.nationalWorldCup=null;state.scorers={year:state.year,competitions:{}};state.round=0;state.countryTables=countryLeagues.map((_,li)=>makeLeagueTable(li));state.countryRounds=countryLeagues.map(()=>0);state.results=[];state.standings=teams.map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}));for(const team of state.players)for(const p of team){if(Math.random()<.4)p.ovr=Math.max(65,Math.min(93,p.ovr+(Math.random()<.65?1:-1)));if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10)}newLibertadores();newSudamericana();initExtraCups();if(fired){state.page='jobs';jobInit().offers=[];jobOffers(true)}save();render();alertMsg(fired?'Você foi demitido! Confira as propostas em Empregos.':'Bem-vindo à temporada '+state.year+'!')}
+function transfer(from,index,to){if(!requireTransferWindow())return;if(from===to)return;const p=state.players[from][index];if(!p)return;const cost=p.value;if(to===state.club&&state.budget<cost){alertMsg('Saldo insuficiente!');return}if(from===state.club){if(state.players[from].length<=4){alertMsg('Mantenha pelo menos quatro jogadores!');return}state.budget+=cost}else if(to===state.club)state.budget-=cost;state.players[from].splice(index,1);state.players[to].push(p);save();render();alertMsg(p.name+(to===state.club?' contratado!':' vendido!'))}
 function chooseClub(id,li=0){setCareerLegendMode();state.nationalOnly=false;const noDismissalChoice=!!document.getElementById('noDismissalStart')?.checked;state.noDismissal=noDismissalChoice;state.noRetirements=!!document.getElementById('noRetirementsStart')?.checked;state.archiveWorldHistory=!!document.getElementById('archiveWorldHistoryStart')?.checked;delete state.noDismissalDraft;delete state.archiveWorldHistoryDraft;if(multiplayer&&multiplayer.players.some((p,i)=>i!==multiplayer.active&&p.club!==null&&p.careerCountry===li&&p.careerClub===id)){alertMsg('Esse clube já pertence a outro treinador da sala.');return}state.scorers={year:state.year,competitions:{}};state.club=id;state.careerClub=id;state.careerCountry=li;state.page='home';state.lineup=null;state.budget=35;state.payroll={year:state.year,monthsPaid:0,history:[]};state.jobStatus='employed';state.satisfaction={board:65,fans:70,seen:0,lastMessage:'Início do trabalho'};state.managerCareer={reputation:50,events:[{year:state.year,text:'Início da carreira no '+countryLeagues[li].clubs[id]}],clubFunds:{},offers:[],lastReview:null};newLibertadores();newSudamericana();initExtraCups();initChampions();save();render();alertMsg('Bem-vindo ao '+countryLeagues[li].clubs[id]+'!')}
 function careerLeague(){return state.careerCountry||0}
 function careerName(){return countryLeagues[careerLeague()].clubs[state.careerClub]}
@@ -924,7 +1013,7 @@ function applyBrazilPromotionRelegation(){
  state.brazilMovements=state.brazilMovements||[];
  state.brazilMovements.push({year:state.year,changes});
 }
-function nextCareerSeason(){stateCupsInit();for(let i=0;i<state.stateCups.length;i++)if(state.stateCups[i].champion===null)simulateStateCup(i);if(state.jobStatus==='fired'){state.page='jobs';render();alertMsg('Aceite um novo emprego antes de continuar.');return}if(multiplayer&&multiplayer.players.some(p=>!p.ready)){alertMsg('Todos os treinadores precisam encerrar suas vezes antes da nova temporada.');return}if(!careerSeasonEnd())return;if(!cupsFinished()){alertMsg(isEuropeanCareer()?'Finalize a Champions League, o Mundial de Clubes, a copa nacional e o Super Mundial (quando houver)!':'Finalize a Libertadores, a Sul-Americana, o Mundial de Clubes, a copa nacional e o Super Mundial (quando houver)!');return;}seasonCompetitionReport();state.individualAwardsHistory=state.individualAwardsHistory||{};state.individualAwardsHistory[state.year]=individualAwards();captureCurrentTrophies();captureLeagueTrophies();applyBrazilPromotionRelegation();const fired=reviewManagerSeason();const pos=careerRank().findIndex(t=>t.id===state.careerClub)+1;state.history.push({year:state.year,position:pos,points:careerTable()[state.careerClub].pts,club:careerName(),league:countryLeagues[careerLeague()].name});state.budget+=Math.max(5,40-pos*1.5);state.year++;state.dayOfYear=1;const retired=processRetirements();developYouth();const contractResult=expireContracts();state.nationalWorldCup=null;state.payroll={year:state.year,monthsPaid:0,history:[]};state.round=0;state.results=[];state.standings=teams.map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}));state.countryTables=countryLeagues.map((_,li)=>makeLeagueTable(li));state.countryRounds=countryLeagues.map(()=>0);for(const roster of [...state.players,...state.foreignPlayers.filter(Boolean).flat()])for(const p of roster){if(Math.random()<.4)p.ovr=Math.max(60,Math.min(94,p.ovr+(Math.random()<.65?1:-1)));if(!Number.isFinite(p.transfermarktEUR))p.value=3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10)}calibrateBrazilDivisionStrength();newLibertadores();newSudamericana();initExtraCups();initChampions();initIntercontinental();save();render();alertMsg('Temporada '+state.year+'! Contratos encerrados: '+contractResult.released+' • renovações emergenciais: '+contractResult.emergency+' • aposentados: '+retired)}
+function nextCareerSeason(){stateCupsInit();for(let i=0;i<state.stateCups.length;i++)if(state.stateCups[i].champion===null)simulateStateCup(i);if(state.jobStatus==='fired'){state.page='jobs';render();alertMsg('Aceite um novo emprego antes de continuar.');return}if(multiplayer&&multiplayer.players.some(p=>!p.ready)){alertMsg('Todos os treinadores precisam encerrar suas vezes antes da nova temporada.');return}if(!careerSeasonEnd())return;if(!cupsFinished()){alertMsg(isEuropeanCareer()?'Finalize a Champions League, o Mundial de Clubes, a copa nacional e o Super Mundial (quando houver)!':'Finalize a Libertadores, a Sul-Americana, o Mundial de Clubes, a copa nacional e o Super Mundial (quando houver)!');return;}seasonCompetitionReport();state.individualAwardsHistory=state.individualAwardsHistory||{};state.individualAwardsHistory[state.year]=individualAwards();captureCurrentTrophies();captureLeagueTrophies();applyBrazilPromotionRelegation();const fired=reviewManagerSeason();const pos=careerRank().findIndex(t=>t.id===state.careerClub)+1;state.history.push({year:state.year,position:pos,points:careerTable()[state.careerClub].pts,club:careerName(),league:countryLeagues[careerLeague()].name});state.budget+=Math.max(5,40-pos*1.5);state.year++;state.dayOfYear=1;const retired=processRetirements();developYouth();const contractResult=expireContracts();state.nationalWorldCup=null;state.payroll={year:state.year,monthsPaid:0,history:[]};state.round=0;state.results=[];state.standings=teams.map((t,i)=>({id:i,pts:0,p:0,w:0,d:0,l:0,gf:0,ga:0}));state.countryTables=countryLeagues.map((_,li)=>makeLeagueTable(li));state.countryRounds=countryLeagues.map(()=>0);for(const [rosterIndex,roster] of [...state.players,...state.foreignPlayers.filter(Boolean).flat()].entries())for(const p of roster){if(Math.random()<.4)p.ovr=Math.max(60,Math.min(94,p.ovr+(Math.random()<.65?1:-1)));if(!Number.isFinite(p.transfermarktEUR))p.value=latinPrice(3*Math.max(1,Math.round((p.ovr-65)*1.1*10)/10),rosterIndex<state.players.length?0:countryLeagues.findIndex((l,li)=>li>0&&state.foreignPlayers?.[li]?.includes(roster)))}calibrateBrazilDivisionStrength();newLibertadores();newSudamericana();initExtraCups();initChampions();initIntercontinental();save();render();alertMsg('Temporada '+state.year+'! Contratos encerrados: '+contractResult.released+' • renovações emergenciais: '+contractResult.emergency+' • aposentados: '+retired)}
 // Satisfação da diretoria e da torcida: 0 a 100, persistida por treinador.
 function satisfactionInit(){
  if(!state.satisfaction||typeof state.satisfaction.board!=='number')state.satisfaction={board:65,fans:70,seen:0,lastMessage:'Início do trabalho'};
@@ -977,7 +1066,7 @@ function playerSalary(p){
 // Contratos em temporadas: dados fictícios do simulador, persistidos nos jogadores.
 function ensureContracts(){
  if(!Array.isArray(state.freeAgents))state.freeAgents=[];
- for(const roster of [...state.players,...state.foreignPlayers.filter(Boolean).flat()])for(const p of roster){
+ for(const [rosterIndex,roster] of [...state.players,...state.foreignPlayers.filter(Boolean).flat()].entries())for(const p of roster){
   if(!Number.isFinite(p.contractUntil))p.contractUntil=state.year+1+(Math.abs([...p.name].reduce((n,c)=>n+c.charCodeAt(0),0))%4);
   if(!Number.isFinite(p.contractSalary))p.contractSalary=playerSalary(p);
  }
@@ -1021,7 +1110,7 @@ function expireContracts(){
  state.lineup=null;
  return {released,emergency};
 }
-function signFreeAgent(index){
+function signFreeAgent(index){if(!requireTransferWindow())return;
  ensureContracts();const p=state.freeAgents[index];if(!p)return;
  const bonus=Math.round(Math.max(.1,p.value*.08)*100)/100;
  if(state.budget<bonus){alertMsg('Saldo insuficiente para contratar: '+fmt(bonus));return}
@@ -1031,20 +1120,45 @@ function signFreeAgent(index){
  careerRoster().push(p);state.lineup=null;save();render();alertMsg('✍️ '+p.name+' contratado sem clube até '+p.contractUntil);
 }
 function renderContracts(){ensureContracts();const roster=careerRoster();const ending=roster.filter(p=>contractYears(p)<=1).length;
- return `<section class="panel"><h3>📝 Contratos de ${careerName()}</h3><p class="muted">${ending} jogador(es) com contrato terminando nesta temporada ou na próxima. Renove antes de avançar a temporada. Valores de salários e bônus são fictícios e em milhões de R$.</p><p>Saldo disponível: <b>${fmt(state.budget)}</b></p><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>VENCIMENTO</th><th>SALÁRIO/MÊS</th><th>RENOVAR</th></tr></thead><tbody>${roster.map((p,i)=>`<tr><td>${p.name}</td><td><b style="color:${contractYears(p)<=1?'#ffb86b':'inherit'}">${p.contractUntil}</b>${contractYears(p)<=1?' ⚠️':''}</td><td>${fmt(playerSalary(p))}</td><td><select id="contract-years-${i}" aria-label="Anos de contrato para ${p.name}"><option value="1">1 ano</option><option value="2" selected>2 anos</option><option value="3">3 anos</option><option value="4">4 anos</option><option value="5">5 anos</option></select> <button class="secondary" data-renew="${i}">Renovar</button></td></tr>`).join('')}</tbody></table></div></section><section class="panel"><h3>🆓 Jogadores livres (${state.freeAgents.length})</h3><p class="muted">Jogadores que encerraram seus contratos podem ser contratados sem taxa de transferência, mediante bônus de assinatura.</p>${state.freeAgents.slice(0,80).map((p,i)=>`<div class="row" style="gap:10px;flex-wrap:wrap"><span>${p.name} • ${p.pos} • GER ${p.ovr}</span><button class="secondary" data-sign-free="${i}">Contratar • ${fmt(Math.round(Math.max(.1,p.value*.08)*100)/100)}</button></div>`).join('')||'<p class="muted">Nenhum jogador livre no momento.</p>'}</section>`;
+ return `<section class="panel"><h3>📝 Contratos de ${careerName()}</h3><p class="muted">${ending} jogador(es) com contrato terminando nesta temporada ou na próxima. Renove antes de avançar a temporada. Valores de salários e bônus são fictícios e em milhões de R$.</p><p>Saldo disponível: <b>${fmt(state.budget)}</b></p><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>VENCIMENTO</th><th>SALÁRIO/MÊS</th><th>RENOVAR</th></tr></thead><tbody>${roster.map((p,i)=>`<tr><td>${p.name}</td><td><b style="color:${contractYears(p)<=1?'#ffb86b':'inherit'}">${p.contractUntil}</b>${contractYears(p)<=1?' ⚠️':''}</td><td>${fmt(playerSalary(p))}</td><td><select id="contract-years-${i}" aria-label="Anos de contrato para ${p.name}"><option value="1">1 ano</option><option value="2" selected>2 anos</option><option value="3">3 anos</option><option value="4">4 anos</option><option value="5">5 anos</option></select> <button class="secondary" data-renew="${i}">Renovar</button></td></tr>`).join('')}</tbody></table></div></section><section class="panel"><h3>🆓 Jogadores livres (${state.freeAgents.length})</h3><p class="muted">Jogadores que encerraram seus contratos podem ser contratados sem taxa de transferência, mediante bônus de assinatura.</p>${state.freeAgents.slice(0,80).map((p,i)=>`<div class="row" style="gap:10px;flex-wrap:wrap"><span>${p.name} • ${p.pos} • GER ${p.ovr}</span><button class="secondary" data-sign-free="${i}" ${!transferWindowInfo().open?'disabled':''}>Contratar • ${fmt(Math.round(Math.max(.1,p.value*.08)*100)/100)}</button></div>`).join('')||'<p class="muted">Nenhum jogador livre no momento.</p>'}</section>`;
 }
 function salaryBill(){return careerRoster().reduce((sum,p)=>sum+playerSalary(p),0)}
 function initPayroll(){if(!state.payroll||state.payroll.year!==state.year)state.payroll={year:state.year,monthsPaid:0,history:[]};for(const roster of [...state.players,...state.foreignPlayers.filter(Boolean).flat()])for(const p of roster)playerSalary(p)}
 function payMonthlyWages(){initPayroll();const due=Math.floor(careerRound()/4);let paid=0;while(state.payroll.monthsPaid<due){const amount=salaryBill();state.budget=Math.round((state.budget-amount)*1000)/1000;state.payroll.monthsPaid++;paid+=amount;state.payroll.history.push({year:state.year,month:state.payroll.monthsPaid,amount:Math.round(amount*1000)/1000});}if(paid>0)alertMsg('💸 Salários pagos: '+fmt(paid)+' • Saldo: '+fmt(state.budget));}
 function renderFinances(){initPayroll();const bill=salaryBill();return `<section class="panel"><h3>💰 Finanças e salários mensais</h3><p>Saldo do clube: <b>${fmt(state.budget)}</b> • Folha mensal: <b>${fmt(bill)}</b> • Meses pagos nesta temporada: ${state.payroll.monthsPaid}</p><p class="muted">A cada 4 rodadas do seu campeonato nacional passa um mês financeiro. Os salários estão 25% menores que na versão x10 e são descontados automaticamente, inclusive quando o caixa fica negativo. Valores fictícios em milhões; por exemplo, 0,100 = 100 mil por mês.</p><div class="tablewrap"><table><thead><tr><th>Jogador</th><th>Posição</th><th>GER</th><th>Salário mensal</th></tr></thead><tbody>${careerRoster().map(p=>`<tr><td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>${fmt(playerSalary(p))}</td></tr>`).join('')}</tbody></table></div></section><section class="panel"><h3>Extrato salarial</h3>${state.payroll.history.slice().reverse().map(x=>`<div class="row"><span>${x.year} • Mês ${x.month}</span><b>− ${fmt(x.amount)}</b></div>`).join('')||'<p class="muted">Nenhum pagamento realizado ainda.</p>'}</section>`}
+// Janelas de transferências do POIFOOTB (calendário simplificado, não oficial).
+// A data acompanha o dia do calendário da carreira, inclusive após virar o ano.
+function transferWindowInfo(){
+ const d=new Date(state.year,0,Math.max(1,state.dayOfYear||1));
+ const month=d.getMonth()+1, day=d.getDate();
+ const open=month===1||month===2||month===7||month===8;
+ let next;
+ if(open)next=month<=2?'28 de fevereiro':'31 de agosto';
+ else if(month<7)next='1º de julho';
+ else next='1º de janeiro de '+(state.year+1);
+ return {open,next,month,day};
+}
+function requireTransferWindow(){
+ if(transferWindowInfo().open)return true;
+ alertMsg('🔒 Janela de transferências fechada! Próxima abertura: '+transferWindowInfo().next+'.');
+ return false;
+}
+function transferWindowWidget(){
+ const w=transferWindowInfo();
+ return `<section class="panel"><h3>📅 Janelas de transferências — ${state.year}</h3>
+ <p style="font-size:1.15rem"><b>${w.open?'🟢 MERCADO ABERTO':'🔴 MERCADO FECHADO'}</b></p>
+ <p><b>1ª janela:</b> 1º de janeiro a 28 de fevereiro<br><b>2ª janela:</b> 1º de julho a 31 de agosto</p>
+ <p class="muted">Data do jogo: ${dateLabel()} • ${w.open?'Fecha em '+w.next:'Próxima abertura: '+w.next}. Compras, vendas, ofertas aceitas e contratações de jogadores livres só são concluídas durante as janelas. Renovações de contrato continuam permitidas.</p>
+ </section>`;
+}
 function allTransferClubs(){return countryLeagues.flatMap((l,li)=>l.clubs.map((name,ci)=>({li,ci,name,roster:li===0?state.players[ci]:state.foreignPlayers[li][ci]})))}
-function transferInternational(fromLi,fromCi,index){const toLi=careerLeague(),toCi=state.careerClub;if(fromLi===toLi&&fromCi===toCi)return;const source=fromLi===0?state.players[fromCi]:state.foreignPlayers[fromLi][fromCi];const p=source[index];if(!p)return;if(p.placeholder){alertMsg('Este atleta ainda não tem identidade real confirmada.');return}if(source.length<=11){alertMsg('O clube vendedor precisa manter ao menos 11 jogadores.');return}if(state.budget<p.value){alertMsg('Saldo insuficiente!');return}state.budget-=p.value;source.splice(index,1);careerRoster().push(p);p.contractUntil=state.year+2;p.contractSalary=playerSalary(p);state.lineup=null;save();render();alertMsg(p.name+' contratado de '+countryLeagues[fromLi].clubs[fromCi]+'!')}
+function transferInternational(fromLi,fromCi,index){if(!requireTransferWindow())return;const toLi=careerLeague(),toCi=state.careerClub;if(fromLi===toLi&&fromCi===toCi)return;const source=fromLi===0?state.players[fromCi]:state.foreignPlayers[fromLi][fromCi];const p=source[index];if(!p)return;if(p.placeholder){alertMsg('Este atleta ainda não tem identidade real confirmada.');return}if(source.length<=11){alertMsg('O clube vendedor precisa manter ao menos 11 jogadores.');return}if(state.budget<p.value){alertMsg('Saldo insuficiente!');return}state.budget-=p.value;source.splice(index,1);careerRoster().push(p);p.contractUntil=state.year+2;p.contractSalary=playerSalary(p);state.lineup=null;save();render();alertMsg(p.name+' contratado de '+countryLeagues[fromLi].clubs[fromCi]+'!')}
 // Propostas de compra geradas por clubes controlados pela IA; persistem no save.
 function transferOffersInit(){
  if(!state.transferOffers||typeof state.transferOffers!=='object')state.transferOffers={inbox:[],history:[],lastChecked:null,seq:0};
  return state.transferOffers;
 }
-function generateClubOffers(){
+function generateClubOffers(){if(!transferWindowInfo().open)return;
  if(state.club===null||state.jobStatus==='fired')return;
  const t=transferOffersInit(),day=state.year+':'+(state.dayOfYear||1);
  if(t.lastChecked===day)return;
@@ -1062,7 +1176,7 @@ function generateClubOffers(){
  const amount=Math.round(base*(.85+Math.random()*.55)*100)/100;
  t.inbox.push({id:++t.seq,year:state.year,day:state.dayOfYear,expires:state.dayOfYear+14,li:buyer.li,ci:buyer.ci,playerName:selected.p.name,playerId:selected.p.id,amount});
 }
-function resolveClubOffer(id,accept){
+function resolveClubOffer(id,accept){if(accept&&!requireTransferWindow())return;
  const t=transferOffersInit(),index=t.inbox.findIndex(o=>o.id===id);
  if(index<0){alertMsg('Proposta não encontrada.');return}
  const o=t.inbox[index],roster=careerRoster(),pi=roster.findIndex(p=>p.name===o.playerName&&p.id===o.playerId);
@@ -1076,9 +1190,9 @@ function resolveClubOffer(id,accept){
 }
 function renderClubOffers(){
  const t=transferOffersInit();
- return `<section class="panel"><h3>📨 Propostas recebidas de outros clubes</h3><p class="muted">Clubes da IA podem oferecer valores pelos seus atletas. Você decide aceitar ou recusar. Ofertas expiram após 14 dias do calendário. Os valores são fictícios do POIFOOTB.</p>${t.inbox.length?t.inbox.map(o=>`<div class="row" style="flex-wrap:wrap;gap:12px;border-bottom:1px solid #39483e;padding:12px 0"><div><b>${o.playerName}</b><p class="muted">${countryLeagues[o.li].clubs[o.ci]} • ${fmt(o.amount)} • expira no dia ${o.expires}</p></div><div><button class="primary" data-offer-accept="${o.id}">Aceitar</button> <button class="secondary" data-offer-reject="${o.id}">Recusar</button></div></div>`).join(''):'<p class="muted">Nenhuma proposta pendente. Avance os dias para receber ofertas.</p>'}</section><section class="panel"><h3>📋 Histórico de propostas</h3>${t.history.slice(0,12).map(o=>`<div class="row"><span>${o.playerName} • ${countryLeagues[o.li].clubs[o.ci]}</span><b>${fmt(o.amount)} • ${o.accepted?'Aceita':'Recusada'}</b></div>`).join('')||'<p class="muted">Nenhuma proposta respondida.</p>'}</section>`;
+ return `<section class="panel"><h3>📨 Propostas recebidas de outros clubes</h3><p class="muted">Clubes da IA podem oferecer valores pelos seus atletas. Você decide aceitar ou recusar. Ofertas expiram após 14 dias do calendário. Os valores são fictícios do POIFOOTB.</p>${t.inbox.length?t.inbox.map(o=>`<div class="row" style="flex-wrap:wrap;gap:12px;border-bottom:1px solid #39483e;padding:12px 0"><div><b>${o.playerName}</b><p class="muted">${countryLeagues[o.li].clubs[o.ci]} • ${fmt(o.amount)} • expira no dia ${o.expires}</p></div><div><button class="primary" data-offer-accept="${o.id}" ${!transferWindowInfo().open?'disabled':''}>Aceitar</button> <button class="secondary" data-offer-reject="${o.id}">Recusar</button></div></div>`).join(''):'<p class="muted">Nenhuma proposta pendente. Avance os dias para receber ofertas.</p>'}</section><section class="panel"><h3>📋 Histórico de propostas</h3>${t.history.slice(0,12).map(o=>`<div class="row"><span>${o.playerName} • ${countryLeagues[o.li].clubs[o.ci]}</span><b>${fmt(o.amount)} • ${o.accepted?'Aceita':'Recusada'}</b></div>`).join('')||'<p class="muted">Nenhuma proposta respondida.</p>'}</section>`;
 }
-function sellInternational(index){const source=careerRoster(),p=source[index];if(!p)return;if(source.length<=11){alertMsg('Mantenha ao menos 11 jogadores no elenco!');return}const destinations=allTransferClubs().filter(t=>!(t.li===careerLeague()&&t.ci===state.careerClub));const buyer=destinations[Math.floor(Math.random()*destinations.length)];source.splice(index,1);buyer.roster.push(p);state.budget+=p.value;state.lineup=null;save();render();alertMsg(p.name+' vendido para '+buyer.name+'!')}
+function sellInternational(index){if(!requireTransferWindow())return;const source=careerRoster(),p=source[index];if(!p)return;if(source.length<=11){alertMsg('Mantenha ao menos 11 jogadores no elenco!');return}const destinations=allTransferClubs().filter(t=>!(t.li===careerLeague()&&t.ci===state.careerClub));const buyer=destinations[Math.floor(Math.random()*destinations.length)];source.splice(index,1);buyer.roster.push(p);state.budget+=p.value;state.lineup=null;save();render();alertMsg(p.name+' vendido para '+buyer.name+'!')}
 
 const FORMATIONS={'4-3-3':['GOL','LD','ZAG','ZAG','LE','MC','MC','MEI','PD','ATA','PE'],'4-4-2':['GOL','LD','ZAG','ZAG','LE','MC','MC','MEI','MEI','ATA','ATA'],'4-2-3-1':['GOL','LD','ZAG','ZAG','LE','VOL','VOL','PD','MEI','PE','ATA'],'3-5-2':['GOL','ZAG','ZAG','ZAG','LD','VOL','MC','MEI','LE','ATA','ATA'],'5-3-2':['GOL','LD','ZAG','ZAG','ZAG','LE','MC','MC','MEI','ATA','ATA']};
 // A chave de escalação é o índice do atleta no elenco, evitando IDs duplicados de jogadores transferidos.
@@ -1131,8 +1245,8 @@ function controlledCupPair(pairs){
 }
 function cupFixtures(cup){
  if(!cup||cup.champion!==null||cup.notScheduled)return [];
- if(cup.remaining)return cup.remaining.reduce((out,a,i,arr)=>{if(i%2===0&&arr[i+1]!==undefined)out.push([a,arr[i+1]]);return out},[]);
- if(cup.round>=6&&cup.knockout)return cupFixtures({remaining:cup.knockout,champion:null});
+ if(cup.remaining)return cup.remaining.reduce((out,a,i,arr)=>{if(i%2===0&&arr[i+1]!==undefined)out.push(cup.firstLeg?[arr[i+1],a]:[a,arr[i+1]]);return out},[]);
+ if(cup.round>=6&&cup.knockout)return cupFixtures({remaining:cup.knockout,firstLeg:cup.firstLeg,champion:null});
  if(cup.round<6&&cup.groups){let fixtures=[[0,1],[2,3]];if(cup.round%3===1)fixtures=[[0,2],[1,3]];if(cup.round%3===2)fixtures=[[0,3],[1,2]];if(cup.round>=3)fixtures=fixtures.map(([a,b])=>[b,a]);return cup.groups.flatMap(g=>fixtures.map(([a,b])=>[g[a],g[b]]));}
  return [];
 }
@@ -1407,8 +1521,8 @@ function renderHome(){
  <section class="fm-widget fm-table"><div class="fm-widget-head"><h3>📊 Classificação</h3><button class="fm-text-button" data-dash-page="league">Tabela completa ›</button></div><div class="fm-standings">${standings}</div></section>
  </div>${satisfactionWidget()}`;
 }
-function renderSquad(){return `<section class="panel"><h3>Elenco de ${careerName()} (${careerRoster().length} jogadores) ${state.legendMode?'🏆 Modo Lendas':''}</h3><p class="notice">Elencos de demonstração: alguns nomes não estão verificados para novembro de 2026. As vagas “Atleta a confirmar” são provisórias.</p>${squadPitch(false)}<div class="squad-quick-actions"><button class="primary" data-dash-page="tactics">✏️ Editar escalação no campo</button></div><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>OVERALL</th><th>VALOR</th><th>SALÁRIO/MÊS</th><th>CONTRATO</th><th>FELICIDADE</th><th>AÇÃO</th></tr></thead><tbody>${careerRoster().map((p,i)=>`<tr><td>${p.name}</td><td>${p.pos}</td><td class="rating">${p.ovr}</td><td title="${marketValueInfo(p)}">${fmt(p.value)}${Number.isFinite(p.transfermarktEUR)?' ✓':' *'}</td><td>${fmt(playerSalary(p))}</td><td>${p.contractUntil}</td><td>${happinessBar(p)}</td><td><button class="secondary" data-sell="${i}" ${careerRoster().length<=11?'disabled':''}>Vender</button></td></tr>`).join('')}</tbody></table></div></section>`}
-function renderMarket(){let available=[];allTransferClubs().forEach(t=>{if(t.li!==careerLeague()||t.ci!==state.careerClub)t.roster.forEach((p,i)=>{if(!p.placeholder)available.push({...t,p,i})})});available.sort((a,b)=>b.p.ovr-a.p.ovr);const listed=careerRoster().map((p,i)=>({p,i})).filter(({p})=>happinessOf(p)>=25&&happinessOf(p)<=49);return renderClubOffers()+`<section class="panel"><h3>📋 Lista de transferências por insatisfação</h3><p class="muted">Jogadores entre 25% e 49% de felicidade são colocados automaticamente à venda. Com 24% ou menos, deixam o clube e ficam disponíveis nos passes livres.</p>${listed.length?listed.map(({p,i})=>`<div class="marketrow"><div><b>${p.name}</b><small>${p.pos} • GER ${p.ovr} • Felicidade ${happinessOf(p)}%</small></div><span class="price">${fmt(p.value)}</span><button class="secondary" data-sell="${i}">Vender</button></div>`).join(''):'<p class="muted">Nenhum jogador insatisfeito listado.</p>'}</section><section class="panel"><h3>🌍 Mercado internacional</h3><p class="muted">* Preço estimado pelo POIFOOTB. ✓ Valor de referência do Transfermarkt, com preço de negociação 3× maior, convertido para R$ à taxa fixa ilustrativa de R$ 6/€. Os dados importados pelo usuário não são verificados automaticamente; valores pré-carregados são uma amostra de consultas de 2026.</p><p class="muted">Saldo: ${fmt(state.budget)} • Jogadores das 15 ligas. Clubes e vínculos são ilustrativos, não cadastros oficiais atualizados.</p><input id="filter" placeholder="Buscar jogador, clube ou país" aria-label="Buscar jogador, clube ou país" style="width:100%;margin:12px 0;padding:12px;border-radius:8px;border:1px solid #425844;background:#101a13;color:white"><details class="panel" style="margin:12px 0"><summary>📥 Importar valores do Transfermarkt (JSON)</summary><p class="muted">Insira dados conferidos manualmente: nome, clube e liga precisam coincidir com o cadastro. valorEUR é o valor total em euros, e data é a data da consulta.</p><textarea id="tm-import" rows="5" style="width:100%;background:#101a13;color:white;border:1px solid #425844;border-radius:8px;padding:10px" placeholder='[{"jogador":"Pedro","clube":"Flamengo","liga":"Brasil","valorEUR":10000000,"data":"2026-11-06"}]'></textarea><button class="secondary" id="tm-import-button">Importar valores</button><p id="tm-import-status" class="muted"></p></details><div id="marketlist">${available.map(({p,li,ci,name,i})=>`<div class="marketrow" data-search="${(p.name+' '+name+' '+countryLeagues[li].name).toLowerCase()}"><div><b>${p.name}</b><small>${countryLeagues[li].flag} ${name} • ${p.pos} • GER ${p.ovr}</small></div><span class="price" title="${marketValueInfo(p)}">${fmt(p.value)}${Number.isFinite(p.transfermarktEUR)?' ✓':' *'}</span><button class="secondary" data-buy="${li}:${ci}:${i}" ${state.budget<p.value?'disabled':''}>Contratar</button></div>`).join('')}</div></section>`}
+function renderSquad(){return `<section class="panel"><h3>Elenco de ${careerName()} (${careerRoster().length} jogadores) ${state.legendMode?'🏆 Modo Lendas':''}</h3><p class="notice">Elencos de demonstração: alguns nomes não estão verificados para novembro de 2026. As vagas “Atleta a confirmar” são provisórias.</p>${squadPitch(false)}<div class="squad-quick-actions"><button class="primary" data-dash-page="tactics">✏️ Editar escalação no campo</button></div><div class="tablewrap"><table><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>OVERALL</th><th>VALOR</th><th>SALÁRIO/MÊS</th><th>CONTRATO</th><th>FELICIDADE</th><th>AÇÃO</th></tr></thead><tbody>${careerRoster().map((p,i)=>`<tr><td>${p.name}</td><td>${p.pos}</td><td class="rating">${p.ovr}</td><td title="${marketValueInfo(p)}">${fmt(p.value)}${Number.isFinite(p.transfermarktEUR)?' ✓':' *'}</td><td>${fmt(playerSalary(p))}</td><td>${p.contractUntil}</td><td>${happinessBar(p)}</td><td><button class="secondary" data-sell="${i}" ${!transferWindowInfo().open||careerRoster().length<=11?'disabled':''}>Vender</button></td></tr>`).join('')}</tbody></table></div></section>`}
+function renderMarket(){let available=[];allTransferClubs().forEach(t=>{if(t.li!==careerLeague()||t.ci!==state.careerClub)t.roster.forEach((p,i)=>{if(!p.placeholder)available.push({...t,p,i})})});available.sort((a,b)=>b.p.ovr-a.p.ovr);const listed=careerRoster().map((p,i)=>({p,i})).filter(({p})=>happinessOf(p)>=25&&happinessOf(p)<=49);return transferWindowWidget()+renderClubOffers()+`<section class="panel"><h3>📋 Lista de transferências por insatisfação</h3><p class="muted">Jogadores entre 25% e 49% de felicidade são colocados automaticamente à venda. Com 24% ou menos, deixam o clube e ficam disponíveis nos passes livres.</p>${listed.length?listed.map(({p,i})=>`<div class="marketrow"><div><b>${p.name}</b><small>${p.pos} • GER ${p.ovr} • Felicidade ${happinessOf(p)}%</small></div><span class="price">${fmt(p.value)}</span><button class="secondary" data-sell="${i}" ${!transferWindowInfo().open?'disabled':''}>Vender</button></div>`).join(''):'<p class="muted">Nenhum jogador insatisfeito listado.</p>'}</section><section class="panel"><h3>🌍 Mercado internacional</h3><p class="muted">* Preço estimado pelo POIFOOTB. ✓ Valor de referência do Transfermarkt, com preço de negociação 3× maior (reduzido em 60% para clubes latino-americanos), convertido para R$ à taxa fixa ilustrativa de R$ 6/€. Os dados importados pelo usuário não são verificados automaticamente; valores pré-carregados são uma amostra de consultas de 2026.</p><p class="muted">Saldo: ${fmt(state.budget)} • Jogadores das 15 ligas. Clubes e vínculos são ilustrativos, não cadastros oficiais atualizados.</p><input id="filter" placeholder="Buscar jogador, clube ou país" aria-label="Buscar jogador, clube ou país" style="width:100%;margin:12px 0;padding:12px;border-radius:8px;border:1px solid #425844;background:#101a13;color:white"><details class="panel" style="margin:12px 0"><summary>📥 Importar valores do Transfermarkt (JSON)</summary><p class="muted">Insira dados conferidos manualmente: nome, clube e liga precisam coincidir com o cadastro. valorEUR é o valor total em euros, e data é a data da consulta.</p><textarea id="tm-import" rows="5" style="width:100%;background:#101a13;color:white;border:1px solid #425844;border-radius:8px;padding:10px" placeholder='[{"jogador":"Pedro","clube":"Flamengo","liga":"Brasil","valorEUR":10000000,"data":"2026-11-06"}]'></textarea><button class="secondary" id="tm-import-button">Importar valores</button><p id="tm-import-status" class="muted"></p></details><div id="marketlist">${available.map(({p,li,ci,name,i})=>`<div class="marketrow" data-search="${(p.name+' '+name+' '+countryLeagues[li].name).toLowerCase()}"><div><b>${p.name}</b><small>${countryLeagues[li].flag} ${name} • ${p.pos} • GER ${p.ovr}</small></div><span class="price" title="${marketValueInfo(p)}">${fmt(p.value)}${Number.isFinite(p.transfermarktEUR)?' ✓':' *'}</span><button class="secondary" data-buy="${li}:${ci}:${i}" ${!transferWindowInfo().open||state.budget<p.value?'disabled':''}>Contratar</button></div>`).join('')}</div></section>`}
 function qualificationZone(li,position,total){
  if(li===0||li===15||li===16||li===17){
   if(li!==0&&position<=4)return ['Acesso','zone-promote'];
@@ -1423,7 +1537,7 @@ function qualificationZone(li,position,total){
  if(position<=Math.min(7,Math.ceil(total*.6)))return ['Sul-Americana','zone-continental'];
  if(position>total-2)return ['Zona inferior','zone-relegate'];return ['Permanência',''];
 }
-function renderLeague(){return `<section class="panel"><h3>${countryLeagues[careerLeague()].flag} ${countryLeagues[careerLeague()].name} ${state.year}</h3><p class="muted">Formato simplificado de turno único. As zonas indicam vagas e risco; acesso e rebaixamento são processados entre as Séries A, B, C e D ao fim da temporada.</p><div class="tablewrap"><table><thead><tr><th>#</th><th>CLUBE</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>ZONA</th></tr></thead><tbody>${careerRank().map((t,i)=>`<tr class="${t.id===state.careerClub?'mine':''} ${qualificationZone(careerLeague(),i+1,careerRank().length)[1]}"><td>${i+1}</td><td>${countryLeagues[careerLeague()].clubs[t.id]}</td><td><b>${t.pts}</b></td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf-t.ga}</td><td><small>${qualificationZone(careerLeague(),i+1,careerRank().length)[0]}</small></td></tr>`).join('')}</tbody></table></div></section>`}
+function renderLeague(){return `<section class="panel"><h3>${countryLeagues[careerLeague()].flag} ${countryLeagues[careerLeague()].name} ${state.year}</h3><p class="muted">Formato de pontos corridos em turno e returno (ida e volta). As zonas indicam vagas e risco; acesso e rebaixamento são processados entre as Séries A, B, C e D ao fim da temporada.</p><div class="tablewrap"><table><thead><tr><th>#</th><th>CLUBE</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>ZONA</th></tr></thead><tbody>${careerRank().map((t,i)=>`<tr class="${t.id===state.careerClub?'mine':''} ${qualificationZone(careerLeague(),i+1,careerRank().length)[1]}"><td>${i+1}</td><td>${countryLeagues[careerLeague()].clubs[t.id]}</td><td><b>${t.pts}</b></td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf-t.ga}</td><td><small>${qualificationZone(careerLeague(),i+1,careerRank().length)[0]}</small></td></tr>`).join('')}</tbody></table></div></section>`}
 // Sala de troféus: conquistas persistentes por clube, inclusive após mudança de treinador.
 function trophyCabinetInit(){if(!state.trophyCabinet||typeof state.trophyCabinet!=='object')state.trophyCabinet={};}
 function awardTrophy(uid,competition,year,kind='club'){
@@ -1473,7 +1587,7 @@ function initChampions(){
 }
 function renderChampions(){
  const cup=state.champions;
- return `<section class="hero"><div><span class="eyebrow">FUTEBOL EUROPEU</span><h2>⭐ Champions League ${state.year}</h2><p>Competição obrigatória para treinadores europeus. Simulação simplificada com 20 clubes de Inglaterra, Espanha, Itália, Alemanha e França.</p></div><div class="ball">⭐</div></section>${cupCard(cup,'simchampions')}${statsWidget('champions')}<p class="muted">Os participantes e o formato não representam a UEFA Champions League oficial. Times sul-americanos não precisam simular esta competição para avançar.</p>`;
+ return `<section class="hero"><div><span class="eyebrow">FUTEBOL EUROPEU</span><h2>⭐ Champions League ${state.year}</h2><p>Competição obrigatória para treinadores europeus. Simulação com mata-mata de ida e volta e final única, com 20 clubes de Inglaterra, Espanha, Itália, Alemanha e França.</p></div><div class="ball">⭐</div></section>${cupCard(cup,'simchampions')}${statsWidget('champions')}<p class="muted">Os participantes e o formato não representam a UEFA Champions League oficial. Times sul-americanos não precisam simular esta competição para avançar.</p>`;
 }
 
 // Copas nacionais e Mundial de Clubes: formatos próprios simplificados, sem calendário oficial.
@@ -1531,14 +1645,28 @@ function renderIntercontinental(){
 }
 function simulateKnockout(cup){
  if(!cup||cup.notScheduled||cup.champion!==null)return;
- if(!cup.bracketEntrants)cup.bracketEntrants=(cup.results.length?cup.results.filter(r=>r.stage===cup.results[0].stage).flatMap(r=>[r.a,r.b]):[...cup.remaining]);
- const winners=[];const stage={32:'16 avos',16:'Oitavas',8:'Quartas',4:'Semifinal',2:'Final'}[cup.remaining.length]||'Mata-mata';
- for(let i=0;i<cup.remaining.length;i+=2){const a=cup.remaining[i],b=cup.remaining[i+1];if(b===undefined){winners.push(a);continue}
- let [x,y]=cupPairScores(a,b);if(x===y){if(Math.random()<.5)x++;else y++}
- cup.results.push({stage,a,b,x,y});recordGoals(cup.label.startsWith('Super')?'world':cup.label.startsWith('UEFA Champions')?'champions':'cup-'+Math.floor(a/1000),a,b,x,y);winners.push(x>y?a:b);
+ if(!cup.bracketEntrants)cup.bracketEntrants=[...cup.remaining];
+ const stage={32:'16 avos',20:'Fase eliminatória',16:'Oitavas',8:'Quartas',4:'Semifinal',2:'Final'}[cup.remaining.length]||'Mata-mata';
+ const isFinal=cup.remaining.length===2;
+ const secondLeg=!isFinal&&!!cup.firstLeg;
+ const winners=[], firstLeg=[];
+ for(let i=0;i<cup.remaining.length;i+=2){
+  const a=cup.remaining[i],b=cup.remaining[i+1];
+  if(b===undefined){winners.push(a);continue;}
+  const matchHome=secondLeg?b:a,matchAway=secondLeg?a:b;
+  let [x,y]=cupPairScores(matchHome,matchAway);
+  const previous=secondLeg?cup.firstLeg.find(r=>r.a===a&&r.b===b):null;
+  let winner=null,penalties=false;
+  if(isFinal){if(x===y){penalties=true;winner=Math.random()<.5?a:b}else winner=x>y?a:b;}
+  else if(secondLeg){const ga=(previous?.x||0)+y,gb=(previous?.y||0)+x;if(ga===gb){penalties=true;winner=Math.random()<.5?a:b}else winner=ga>gb?a:b;}
+  else firstLeg.push({a,b,x,y});
+  cup.results.push({stage:stage+(isFinal?'':secondLeg?' • Volta':' • Ida'),a:matchHome,b:matchAway,x,y,penalties,winner});
+  recordGoals(cup.label.startsWith('Super')?'world':cup.label.startsWith('UEFA Champions')?'champions':'cup-'+Math.floor(a/1000),matchHome,matchAway,x,y);
+  if(winner!==null)winners.push(winner);
  }
- cup.remaining=winners;cup.round++;if(winners.length===1){cup.champion=winners[0];if(winners[0]===clubUid(careerLeague(),state.careerClub))state.budget+=cup.label.startsWith('Super')?65:12;}
- save();render();alertMsg(cup.champion!==null?'🏆 Campeão: '+getClubByUid(cup.champion).name:'Etapa '+stage+' concluída!');
+ if(!isFinal&&!secondLeg){cup.firstLeg=firstLeg;}
+ else{cup.firstLeg=null;cup.remaining=winners;cup.round++;if(winners.length===1){cup.champion=winners[0];if(winners[0]===clubUid(careerLeague(),state.careerClub))state.budget+=cup.label.startsWith('Super')?65:12;}}
+ save();render();alertMsg(cup.champion!==null?'🏆 Campeão: '+getClubByUid(cup.champion).name:'Etapa '+stage+(isFinal?'':secondLeg?' • volta concluída!':' • ida concluída!'));
 }
 function extraCupsFinished(){const copaDoPais=state.nationalCups?.[careerLeague()];return !!copaDoPais && copaDoPais.champion!==null && (!state.worldCup||state.worldCup.notScheduled||state.worldCup.champion!==null)}
 // Chaves eliminatórias: preservam o caminho de cada confronto por posição na rodada.
@@ -1807,3 +1935,74 @@ function closeMobileMenu(){document.body.classList.remove('mobile-menu-open');co
 
 // Navegação superior do novo painel
 document.querySelectorAll('[data-jump]').forEach(b=>b.addEventListener('click',()=>{state.page=b.dataset.jump;closeMobileMenu();save();render()}));
+
+
+/* POIFOOTB • Mercado de clubes da IA e jornal da carreira */
+function poiNewsInit(){if(!state.poiNews||typeof state.poiNews!=='object')state.poiNews={events:[],lastAiDay:'',seq:0};return state.poiNews}
+function poiNewsEvent(type,title,description){const n=poiNewsInit();n.events.unshift({id:++n.seq,year:state.year,day:state.dayOfYear||1,type,title,description});n.events=n.events.slice(0,220)}
+function poiAiTransfers(){
+ if(state.club===null||!transferWindowInfo().open)return;
+ const n=poiNewsInit(),day=state.year+':'+(state.dayOfYear||1);
+ if(n.lastAiDay===day)return;
+ n.lastAiDay=day;
+ // Um pequeno número de negócios a cada semana; nunca remove atletas do clube do usuário.
+ if((state.dayOfYear||1)%7!==0)return;
+ const clubs=allTransferClubs().filter(c=>!(c.li===careerLeague()&&c.ci===state.careerClub));
+ if(clubs.length<2)return;
+ const attempts=1+Math.floor(Math.random()*3);
+ for(let a=0;a<attempts;a++){
+  const sellers=clubs.filter(c=>c.roster.length>16&&c.roster.some(p=>!p.placeholder));
+  if(!sellers.length)break;
+  const from=sellers[Math.floor(Math.random()*sellers.length)];
+  const eligible=from.roster.map((p,i)=>({p,i})).filter(x=>!x.p.placeholder&&x.p.ovr>=60);
+  if(!eligible.length)continue;
+  const {p,i}=eligible[Math.floor(Math.random()*eligible.length)];
+  const destinations=clubs.filter(c=>c!==from&&c.roster.length<30);
+  if(!destinations.length)continue;
+  const to=destinations[Math.floor(Math.random()*destinations.length)];
+  const price=Math.round(Math.max(0.1,Number(p.value)||1)*(.85+Math.random()*.45)*10)/10;
+  from.roster.splice(i,1);to.roster.push(p);
+  poiNewsEvent('transfer','💰 '+p.name+' é contratado pelo '+to.name,from.name+' → '+to.name+' • '+fmt(price)+' (valor fictício do jogo)');
+ }
+}
+function poiEscape(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function poiNewsPage(){
+ const n=poiNewsInit();const today=state.dayOfYear||1;
+ const stories=[
+  'Treinadores analisam mudanças táticas para a próxima rodada.',
+  'Torcedores movimentam as redes após os últimos confrontos.',
+  'Olheiros acompanham jovens promessas das categorias de base.',
+  'Diretorias avaliam reforços para a sequência da temporada.',
+  'Expectativa aumenta para os jogos decisivos do calendário.',
+  'Especialistas destacam a importância da preparação física.'
+ ];
+ const lead=stories[(state.year*13+today)%stories.length];
+ const results=(state.results||[]).filter(Boolean).slice(-8).reverse();
+ const table=careerTable?careerTable():[];
+ const ranking=(Array.isArray(table)?[...table]:[]).sort((a,b)=>(b.pts||0)-(a.pts||0)||((b.gf||0)-(b.ga||0))-((a.gf||0)-(a.ga||0))).slice(0,8);
+ const names=countryLeagues[careerLeague()]?.clubs||[];
+ const events=n.events.slice(0,35);
+ return `<section class="panel"><h2>📰 Jornal POIFOOTB</h2><p class="muted">Edição de ${poiEscape(dateLabel())} • Notícias geradas pela simulação, não notícias reais.</p><h3>🔥 Manchete do dia</h3><p>${poiEscape(lead)}</p></section>
+ <section class="panel"><h3>⚽ Resultados recentes do seu clube</h3>${results.length?results.map(r=>`<div class="row"><span>${poiEscape(careerName())} × ${poiEscape(r.opponent)}</span><b>${r.own} × ${r.other}</b></div>`).join(''):'<p class="muted">Nenhum resultado registrado ainda. Simule uma rodada.</p>'}</section>
+ <section class="panel"><h3>📊 Classificação — ${poiEscape(countryLeagues[careerLeague()]?.name||'Liga')}</h3><div class="tablewrap"><table><thead><tr><th>#</th><th>Clube</th><th>PTS</th><th>J</th><th>SG</th></tr></thead><tbody>${ranking.map((r,i)=>`<tr><td>${i+1}</td><td>${poiEscape(names[r.id]||'Clube')}</td><td>${r.pts||0}</td><td>${r.p||0}</td><td>${(r.gf||0)-(r.ga||0)}</td></tr>`).join('')}</tbody></table></div></section>
+ <section class="panel"><h3>💸 Compras, vendas e transferências</h3><p class="muted">Clubes controlados pela IA negociam automaticamente nas janelas. O clube do usuário só vende mediante confirmação ou ações próprias.</p>${events.length?events.map(e=>`<div style="padding:12px 0;border-bottom:1px solid #39483e"><b>${poiEscape(e.title)}</b><p class="muted">${poiEscape(e.description)} • Dia ${e.day}/${e.year}</p></div>`).join(''):'<p class="muted">Nenhuma movimentação ainda. Avance o calendário durante uma janela de transferências.</p>'}</section>`;
+}
+const poiOriginalRender=render;
+render=function(){
+ if(state.page!=='newspaper'){poiOriginalRender();return}
+ state.page='home';poiOriginalRender();state.page='newspaper';
+ document.getElementById('heading').textContent='📰 Jornal POIFOOTB';
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='newspaper'));
+ document.getElementById('app').innerHTML=poiNewsPage();
+};
+const poiOriginalAdvanceDay=advanceDay;
+advanceDay=function(){const prev=state.dayOfYear;poiOriginalAdvanceDay();if(state.dayOfYear!==prev){poiAiTransfers();save();render()}};
+const poiOriginalNextSeason=nextCareerSeason;
+nextCareerSeason=function(){const prev=state.year;poiOriginalNextSeason();if(state.year!==prev){poiNewsEvent('season','🏆 Começou a temporada '+state.year,'O mercado e as competições estão prontos para um novo ano.');save()}};
+const poiOriginalBuy=transferInternational;
+transferInternational=function(li,ci,i){const p=(li===0?state.players[ci]:state.foreignPlayers[li][ci])?.[i];const name=p?.name,old=careerRoster().length;poiOriginalBuy(li,ci,i);if(careerRoster().length>old&&name){poiNewsEvent('buy','🟢 '+careerName()+' contrata '+name,'Chegada de '+countryLeagues[li].clubs[ci]+' • negociação do treinador');save()}};
+const poiOriginalSell=sellInternational;
+sellInternational=function(i){const p=careerRoster()[i],name=p?.name,old=careerRoster().length;poiOriginalSell(i);if(careerRoster().length<old&&name){poiNewsEvent('sell','🔴 '+careerName()+' vende '+name,'Transferência confirmada pelo treinador');save()}};
+const poiOriginalResolve=resolveClubOffer;
+resolveClubOffer=function(id,accept){const offer=transferOffersInit().inbox.find(o=>o.id===id);poiOriginalResolve(id,accept);if(accept&&offer&&!transferOffersInit().inbox.some(o=>o.id===id)){poiNewsEvent('sell','🔴 '+careerName()+' vende '+offer.playerName,'Destino: '+countryLeagues[offer.li].clubs[offer.ci]+' • '+fmt(offer.amount));save()}};
+(function poiAddNewsMenu(){const nav=document.querySelector('nav');if(!nav)return;const b=document.createElement('button');b.dataset.page='newspaper';b.textContent='📰 Jornal e Transferências';nav.appendChild(b);b.onclick=()=>{state.page='newspaper';save();render()}})();
