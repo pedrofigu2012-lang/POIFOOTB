@@ -1,10 +1,11 @@
-POIFOOTB - Simulação de 100 temporadas
+POIFOOTB · Arena 2D
 
-1. Faça backup dos arquivos atuais do GitHub.
-2. Substitua index.html, script.js e style.css na raiz do repositório POIFOOTB.
-3. Não altere online.html nem firebase-config.js.
-4. Abra o jogo, escolha um clube e vá em Calendário.
-5. Clique em Simular 100 temporadas automaticamente.
+1. No GitHub do POIFOOTB, use Add file > Upload files.
+2. Envie partida.html para a raiz do repositório.
+3. Clique em Commit changes.
+4. Abra https://pedrofigu2012-lang.github.io/POIFOOTB/partida.html
 
-A simulação é para carreira individual, não para o multiplayer online.
-O jogo tenta simular as ligas e copas presentes nesta versão e guardar histórico. Algumas competições especiais dependem do calendário interno. Faça backup do save antes de simular.
+Opcional: adicione ao menu do index.html um link:
+<a href="partida.html">⚽ Partida 2D</a>
+
+Esta é uma partida arcade independente para testes, não está integrada à carreira ou ao multiplayer Firebase. Não substitua seus arquivos existentes.
