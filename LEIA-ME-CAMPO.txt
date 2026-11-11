@@ -1,0 +1,1 @@
+Campo da simulação: linhas, áreas, gols e botão Mostrar/Ocultar jogadores. Substitua script.js e style.css no GitHub. Representação ilustrativa.

@@ -152,3 +152,13 @@ button.primary,.primary,.badge.active,.shield{background:var(--club-primary)!imp
 .logo small,.eyebrow,.rating,.sidefoot{color:color-mix(in srgb,var(--club-primary) 70%,white)!important}
 #app a:not(.primary){color:color-mix(in srgb,var(--club-primary) 62%,white)}
 @media(max-width:800px){header{background:color-mix(in srgb,var(--club-primary) 35%,#111522)!important}}
+
+.poi-posse{margin:14px 0;padding:14px;border-radius:12px;background:#152d27}.poi-pitch{height:135px;border:2px solid #fff;border-radius:8px;position:relative;overflow:hidden;margin:10px 0;background:repeating-linear-gradient(90deg,#237c48 0%,#237c48 16.66%,#318a53 16.66%,#318a53 33.33%)}.poi-highlight{position:absolute;top:0;bottom:0;width:33.333%;opacity:.7;transition:left .3s}.poi-midline{position:absolute;left:50%;top:0;bottom:0;border-left:2px solid #ffffff99}.poi-ball{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:25px;transition:left .3s}
+
+.poi-pitch-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.poi-pitch-header button{font-size:12px;padding:7px 10px}
+.poi-pitch{overflow:visible;margin:15px 9px;height:190px;border:2px solid #f4fff3}.poi-midline{z-index:2}
+.poi-center-circle{position:absolute;left:50%;top:50%;width:56px;height:56px;transform:translate(-50%,-50%);border:2px solid #ffffffb8;border-radius:50%;z-index:2}
+.poi-box,.poi-smallbox{position:absolute;top:19%;height:62%;width:16%;border:2px solid #ffffffb8;z-index:2}.poi-box-left,.poi-smallbox-left{left:0;border-left:0}.poi-box-right,.poi-smallbox-right{right:0;border-right:0}.poi-smallbox{top:34%;height:32%;width:6%}
+.poi-goal{position:absolute;top:37%;height:26%;width:10px;border:2px solid #fff;background:#dfeee933;z-index:3}.poi-goal-left{left:-12px;border-radius:3px 0 0 3px}.poi-goal-right{right:-12px;border-radius:0 3px 3px 0}
+.poi-spot{position:absolute;top:49%;height:5px;width:5px;background:#fff;border-radius:50%;z-index:3}.poi-spot-left{left:11%}.poi-spot-right{right:11%}
+.poi-player{position:absolute;z-index:4;transform:translate(-50%,-50%);height:17px;width:17px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;box-shadow:0 1px 3px #0009;border:1px solid white}.poi-player-home{background:var(--club-primary,#d22337);color:#fff}.poi-player-away{background:#f0bc38;color:#141414}.poi-ball{z-index:5;filter:drop-shadow(0 1px 2px #000);font-size:19px}

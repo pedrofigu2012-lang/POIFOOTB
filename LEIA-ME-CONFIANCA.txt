@@ -1,0 +1,8 @@
+POIFOOTB - Confiança unificada
+
+Uma barra única: Torcida + Diretoria.
+Salvamentos existentes: primeira abertura usa a média das duas confianças antigas.
+Vitórias consecutivas: +5, +10, +15 etc. Derrotas: -5, -10, -15. Empates zeram a sequência.
+Demissão abaixo de 20, salvo se a opção de demissão estiver desativada.
+
+Instalação: substitua apenas script.js no GitHub. Faça backup antes.
