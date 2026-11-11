@@ -1,0 +1,1 @@
+Calendário mensal com dias clicáveis, partidas programadas, janelas de transferências e navegação por mês. Datas de jogos seguem a agenda fictícia do POIFOOTB. Substitua index.html, script.js e style.css.

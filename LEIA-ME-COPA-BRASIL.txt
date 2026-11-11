@@ -1,0 +1,1 @@
+Copa do Brasil: 64 clubes, 16 por divisão A/B/C/D. Mata-mata, ida e volta, final única. Carreiras novas recebem a copa ampliada. Carreiras em andamento com copa já iniciada preservam a chave até a temporada seguinte. Instalação: substituir script.js.
