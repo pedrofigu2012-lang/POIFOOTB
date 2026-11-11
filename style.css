@@ -187,3 +187,10 @@ button.primary,.primary,.badge.active,.shield{background:var(--club-primary)!imp
 .poi-cal-details h3{color:#50527e!important;margin:0 0 8px}
 .poi-cal-detail{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #d5d4e0}
 @media(max-width:600px){.poi-cal-cell{min-height:74px;padding:3px;gap:3px}.poi-cal-event{font-size:8px;padding:2px;white-space:normal;overflow-wrap:anywhere;max-height:35px}.poi-cal-number{font-size:10px}.poi-cal-title{font-size:27px}.poi-cal-weekdays{font-size:10px}}
+
+/* Agenda clássica incorporada ao calendário mensal */
+.poi-calendar-integrated{border-top:1px solid rgba(140,130,190,.3);margin-top:22px;padding-top:20px}
+.poi-calendar-integrated .calendar-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.poi-calendar-integrated .calendar-match-list{max-height:540px;overflow-y:auto}
+
+.poi-half-time{margin:14px 0;padding:20px;border:2px solid #e6b64e;border-radius:14px;text-align:center;background:rgba(230,182,78,.12)}.poi-half-time h2{margin:0 0 10px}.poi-half-time button{margin-top:10px}

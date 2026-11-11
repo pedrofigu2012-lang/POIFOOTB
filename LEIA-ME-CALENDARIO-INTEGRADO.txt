@@ -1,0 +1,1 @@
+O calendário mensal agora reúne a agenda original completa: próximos jogos, simulação individual, avanço diário, simulação até data, simulação automática e até 1000 temporadas. Os recursos aparecem abaixo da grade no mesmo painel.
