@@ -1,0 +1,1 @@
+20 escudos recortados da imagem enviada, exibidos automaticamente em tabelas, botões de clubes e escudo do clube selecionado quando os nomes correspondem. A imagem é de baixa resolução; outros clubes não estão na foto e mantêm a aparência anterior. Envie imagens maiores e separadas para qualidade superior.
