@@ -6,12 +6,13 @@ function emblem(name){const id=resolve(name);if(!id)return null;const img=docume
 function enhance(){
  const app=document.getElementById('app');
  if(app){
-  app.querySelectorAll('button.club-link,button[data-viewclub],td,th,h2,h3,h4,.club-name,.team-name,.clubtitle').forEach(el=>{
+  app.querySelectorAll('button.club-link,button[data-viewclub],button[data-club],button[data-selectclub],td,th,h2,h3,h4,.club-name,.team-name,.clubtitle').forEach(el=>{
    if(el.dataset.poiLogoDone)return;
    const name=resolve(el.textContent);
    if(!name)return;
    const img=emblem(name);if(!img)return;
    el.dataset.poiLogoDone='1';el.prepend(img);el.classList.add('poi-with-emblem');
+   if(el.matches('button.club-link,button[data-viewclub],button[data-club],button[data-selectclub]')){el.classList.add('poi-logo-button');el.title=name;el.setAttribute('aria-label','Ver clube '+name);const nodes=[...el.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE&&n.textContent.trim());nodes.forEach(n=>{const span=document.createElement('span');span.className='poi-logo-button-name';span.textContent=n.textContent;n.replaceWith(span)})}
   });
  }
  const shield=document.getElementById('shield'),title=document.getElementById('clubtitle');
